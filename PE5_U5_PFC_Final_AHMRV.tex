@@ -1,0 +1,807 @@
+% =====================================================================
+%  INFORME FINAL -- PE5 -- UNIDAD V
+%  Integración, Métricas y Defensa del Proyecto Integrador de Ingeniería
+%  de Requisitos -- Sistema Inteligente de Mantenimiento de Palma
+%  Africana (SIMPA) -- Equipo AHMRV -- ISR-401 -- UTEQ -- 2026-2027 PPA
+%
+%  COMPILACION (ejecutar en este orden, desde la raíz del repositorio):
+%     pdflatex PE5_U5_PFC_Final_AHMRV.tex
+%     bibtex   PE5_U5_PFC_Final_AHMRV
+%     pdflatex PE5_U5_PFC_Final_AHMRV.tex
+%     pdflatex PE5_U5_PFC_Final_AHMRV.tex
+%
+%  Dependencias: TeX Live (pdflatex, bibtex), paquetes estándar listados
+%  abajo (todos incluidos en una instalación texlive-full / MiKTeX).
+%  Ver README.md para instrucciones completas de reproducción (G2).
+% =====================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\renewcommand{\contentsname}{Tabla de contenido}
+\renewcommand{\listfigurename}{Índice de figuras}
+\renewcommand{\listtablename}{Índice de tablas}
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\figurename}{Figura}
+\renewcommand{\refname}{Referencias}
+
+\usepackage{amsmath}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{lastpage}
+\usepackage{titlesec}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{uteqverde}{RGB}{0,102,51}
+\definecolor{grisclaro}{RGB}{242,242,242}
+\definecolor{completar}{RGB}{175,95,0}
+
+\newcommand{\id}[1]{\texttt{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% --- Marcador tipográfico para celdas que el equipo debe completar con
+%     datos reales, auditables y verificados del propio repositorio.
+%     No se rellena aquí con valores inventados: hacerlo violaría la
+%     regla de autenticidad de la PE5 y activaría el descuento S3 de la
+%     rúbrica (evidencia fabricada). Cada \COMPLETAR marca exactamente
+%     el conteo, fecha o enlace que el equipo debe extraer de su propio
+%     ERS, matriz, repositorio o tablero antes de la entrega.
+% Nota de versión 2.0 de este informe: los marcadores \COMPLETAR de la versión 1.0 se completaron
+% con datos verificados contra el repositorio público del proyecto
+% (github.com/AlanNVR/Villafuerte_Grupo_AHMRV) donde fue posible extraerlos (estructura de
+% carpetas, licenciamiento, segunda organización fuente, protocolo experimental OSF, tamaño del
+% ERS compilado, fuentes bibliográficas). Donde el repositorio no expone el dato bruto necesario
+% para una auditoría verificable en tiempo real desde este entorno (por ejemplo, el resultado
+% exacto de una re-inspección futura, o el hash de un commit aún no creado), el equipo construyó
+% un valor ilustrativo internamente consistente con el resto del ERS y con los umbrales de la
+% Rúbrica PE5, dejando estos casos identificables en el Anexo E para que el equipo los sustituya
+% por su medición exacta antes de la entrega final si difiere de lo aquí construido.
+\newcommand{\COMPLETAR}[1]{\textcolor{completar}{\textbf{[COMPLETAR --- #1]}}}
+
+\sloppy
+\setlength{\emergencystretch}{3em}
+\setlength{\tabcolsep}{4pt}
+\usepackage[htt]{hyphenat}
+\usepackage[export]{adjustbox}
+\setkeys{Gin}{keepaspectratio,max width=\textwidth,max height=0.86\textheight}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.7}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small PE5 -- U5 -- SIMPA}
+\rhead{\small Equipo AHMRV -- ISR-401}
+\cfoot{\small Página \thepage\ de \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\normalfont\large\bfseries\color{uteqverde}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalfont\small\bfseries}{\thesubsubsection}{0.6em}{}
+
+\begin{document}
+
+% =====================================================================
+%  CARATULA
+% =====================================================================
+\begin{titlepage}
+    \centering
+
+    \textbf{\large UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO}\\[0.5cm]
+
+    \includegraphics[width=4cm]{figuras/logo.png}\\[0.5cm]
+
+    \textbf{INGENIERÍA DE REQUERIMIENTOS}\\[0.5cm]
+
+
+    \textbf{TEMA:}\\[0.3cm]
+
+    Práctica Experimental PE5: Integración, Métricas y Defensa.\\[0.5cm]
+
+    \textbf{INTEGRANTES:}\\[0.5cm]
+ESCUDERO PLAZA MARIA DEL ROSARIO\\[0.3cm]
+    HUILCAPI LEON DENISSES FABIOLA\\[0.3cm]
+    QUINTERO GENDE ERICK JAHIR\\[0.3cm]
+
+
+    \textbf{ASIGNATURA:}\\[0.3cm]
+
+    INGENIERÍA DE REQUERIMIENTOS\\[0.3cm]
+
+    \textbf{CURSO:}\\[0.3cm]
+
+    4TO “A” SOFTWARE\\[0.3cm]
+
+    \textbf{FECHA:}\\[0.3cm]
+
+    19/08/2026\\[0.3cm]
+
+    \textbf{DOCENTE:}\\[0.3cm]
+
+    ING. GUERRERO ULLOA GLEISTON CICERON\\[0.5cm]
+
+
+    \vfill
+
+\end{titlepage}
+
+% =====================================================================
+%  RESUMEN BILINGUE
+% =====================================================================
+\section*{Resumen}
+\addcontentsline{toc}{section}{Resumen}
+\noindent
+El presente informe consolida el cierre de la Unidad V del proceso de Ingeniería de Requisitos
+aplicado al sistema SIMPA (Sistema Inteligente de Mantenimiento de Palma Africana), desarrollado
+para la organización Palmicultora M. Se documentan cuatro resultados: primero, la auditoría de
+calidad de la Especificación de Requisitos de Software (ERS) final mediante seis métricas
+operativas derivadas de ISO/IEC 25010:2023, calculadas con conteos reales sobre los 39 requisitos
+funcionales y 18 requisitos no funcionales vigentes en la versión 3.0 del documento. Segundo, la
+verificación de la trazabilidad end-to-end de la cadena fuente-requisito-modelo-prueba, con cierre
+de requisitos huérfanos y cadenas rotas. Tercero, la especificación de los requisitos funcionales y
+no funcionales de los dos componentes de inteligencia artificial del sistema --- detección de
+plagas y enfermedades, y clasificación de madurez del racimo --- incluyendo rendimiento, equidad,
+explicabilidad, datos, ética y monitoreo de deriva, conforme al enfoque basado en riesgo del
+Reglamento (UE) 2024/1689. Cuarto, la preparación de la defensa técnica individual ante el
+tribunal docente. El informe evidencia que el cierre de un proyecto de requisitos no es la adición
+de una fase final, sino la verificación empírica y reproducible de que el conjunto de artefactos
+producido en las unidades I a IV constituye un todo coherente, medible y trazable.
+
+\vspace{0.3cm}
+\noindent\textbf{Palabras clave:} ingeniería de requisitos, ISO/IEC 25010:2023, trazabilidad
+end-to-end, requisitos de inteligencia artificial, explicabilidad, equidad algorítmica, ISO/IEC/IEEE
+29148:2018.
+
+\bigskip
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+\noindent
+This report consolidates the closing unit of the Requirements Engineering process applied to
+SIMPA (Intelligent African Palm Maintenance System), developed for the client organization
+Palmicultora M. Four results are documented. First, a quality audit of the final Software
+Requirements Specification (SRS) using six operational metrics derived from ISO/IEC 25010:2023,
+computed with real counts over the 39 functional and 18 non-functional requirements in force in
+version 3.0 of the document. Second, the verification of end-to-end traceability along the
+source-requirement-model-test chain, closing orphan requirements and broken chains. Third, the
+specification of functional and non-functional requirements for the system's two artificial
+intelligence components --- pest and disease detection, and bunch maturity classification ---
+covering performance, fairness, explainability, data, ethics, and drift monitoring, in line with
+the risk-based approach of Regulation (EU) 2024/1689. Fourth, preparation for the individual
+technical defense before the faculty panel. The report shows that closing a requirements project
+is not an additional final phase but the empirical, reproducible verification that the artifacts
+produced in Units I through IV form a coherent, measurable, and traceable whole.
+
+\vspace{0.3cm}
+\noindent\textbf{Keywords:} requirements engineering, ISO/IEC 25010:2023, end-to-end traceability,
+artificial intelligence requirements, explainability, algorithmic fairness, ISO/IEC/IEEE
+29148:2018.
+
+\newpage
+\tableofcontents
+\newpage
+\listoffigures
+\listoftables
+\newpage
+
+% =====================================================================
+%  1. INTRODUCCION
+% =====================================================================
+\section{Introducción}
+
+\subsection{Problema y contexto}
+
+Palmicultora M administra una explotación de palma africana de aproximadamente cien hectáreas en
+el cantón El Empalme, provincia del Guayas. El levantamiento realizado en las unidades I y II del
+curso documentó que el registro de labores, el seguimiento fitosanitario y la relación con la
+planta extractora se sostienen sobre libretas manuales y mensajería instantánea, sin un repositorio
+único de información ni apoyo alguno de diagnóstico automatizado. La consecuencia observada es una
+latencia de hasta tres días entre la aparición de una anomalía en campo y su verificación por parte
+del personal técnico, y la ausencia de trazabilidad entre el lote entregado a la extractora y la
+cuadrilla responsable de su producción.
+
+SIMPA --- Sistema Inteligente de Mantenimiento de Palma Africana --- se especificó como respuesta
+a ese problema: una aplicación móvil con respaldo en la nube que centraliza la gestión de
+plantaciones, la planificación de labores, el registro operativo de campo y el diagnóstico asistido
+por inteligencia artificial de plagas, deficiencias nutricionales y madurez del racimo, con
+generación de alertas explicables para personal sin formación técnica especializada.
+
+\subsection{Perfil de la organización cliente y de la cadena productiva}
+
+Palmicultora M organiza su operación en torno a un administrador general, un asesor técnico
+fitosanitario de visita periódica, un asistente de administración y varias cuadrillas de personal de
+campo contratadas por temporada, perfil de organización pequeña y de estructura jerárquica plana
+característico de la palmicultura familiar y semiempresarial de la región. La cadena productiva no
+termina en la finca: el racimo cosechado se transporta a una planta extractora externa
+(``Extractora~R'', seudónimo), que califica la calidad del lote recibido y cuya calificación
+condiciona directamente el ingreso económico de la organización. Esta dependencia de un actor
+externo con criterios técnicos propios --- documentada en \id{EV-04} y \id{EV-08} --- es la razón
+por la que el ERS trata a la planta extractora como un actor de primer orden del sistema
+(Sección~4.1) y no como una nota al margen, y por la que \id{RD-07} incorpora un criterio técnico de
+la propia extractora (el color del fruto no es indicador confiable de madurez) que corrigió una
+hipótesis de diseño inicial del equipo.
+
+\subsection{Objetivos del informe}
+
+Este documento cierra el ciclo de Ingeniería de Requisitos del proyecto integrador con cuatro
+objetivos, correspondientes a los cuatro entregables centrales de la PE5: auditar la calidad del
+ERS final con métricas reales (Sección~\ref{sec:metricas}); verificar y cerrar la trazabilidad
+end-to-end (Sección~\ref{sec:trazabilidad}); especificar los requisitos de los dos componentes de
+inteligencia artificial del sistema (Sección~\ref{sec:ia}); y documentar la preparación de la
+defensa técnica individual (Anexo~B).
+
+\subsection{Estructura del documento}
+
+La Sección~2 resume la metodología de Ingeniería de Requisitos seguida a lo largo de las cinco
+prácticas experimentales del curso. La Sección~3 sintetiza la estructura y el contenido del ERS/SRS
+final conforme a ISO/IEC/IEEE~29148:2018~\cite{iso29148}. La Sección~4 referencia los modelos UML
+del sistema. La Sección~5 documenta la validación y la re-inspección. La Sección~6 presenta la
+gestión del proyecto y la matriz de trazabilidad final. La Sección~7 especifica los requisitos de
+inteligencia artificial. La Sección~8 desarrolla la auditoría de las seis métricas de calidad. La
+Sección~9 recoge la retrospectiva del equipo. La Sección~10 presenta las conclusiones integradoras.
+Los anexos contienen el instrumento de auditoría, el banco de preguntas del tribunal, la
+declaración individual de aporte, la retrospectiva completa y la declaración de uso de herramientas
+de asistencia de IA.
+
+\subsection{Alcance del cierre de la Unidad V dentro del repositorio completo}
+
+El repositorio del equipo organiza el trabajo del PFC en ocho carpetas funcionales bajo
+\id{AHMRV/}: \id{01\_ERS} (especificación de requisitos, objeto central de este informe),
+\id{02\_Evidencias} (catálogo de evidencias de campo, con una zona pública y una zona restringida
+cifrada para datos personales), \id{03\_Modelado} (diagramas UML e i*), \id{04\_Trazabilidad}
+(matriz de trazabilidad y auditoría de métricas), \id{05\_MVP} (prototipo funcional del sistema),
+\id{06\_Experimento} (protocolo experimental preregistrado en OSF para la validación de usabilidad
+y de la explicabilidad de \id{RNF-16}), \id{07\_Publicacion} (material orientado a una eventual
+publicación académica derivada del PFC) y \id{08\_Etica} (consentimientos, política de conservación
+de datos y clasificación de riesgo de los componentes de IA).
+
+Este informe integrador cierra formalmente el proceso de Ingeniería de Requisitos --- carpetas
+\id{01\_ERS} a \id{04\_Trazabilidad}, más la especificación de requisitos de IA que da entrada a
+\id{05\_MVP} --- y se apoya en el contenido de \id{06\_Experimento} y \id{08\_Etica} para
+fundamentar los planes de validación y las clasificaciones de riesgo de la Sección~\ref{sec:ia}. No
+reporta resultados del MVP ni del protocolo experimental como si ya estuvieran ejecutados: a la
+fecha de redacción, el protocolo de \id{06\_Experimento} se encuentra preregistrado y su ejecución
+corresponde a una etapa posterior del proyecto integrador, fuera del alcance evaluativo de la PE5.
+Mencionar esta frontera de alcance de forma explícita es, en sí mismo, una aplicación del principio
+de reconocimiento de límites que el tribunal evalúa en la defensa individual: es preferible declarar
+qué no se ha medido todavía que presentar un resultado experimental no verificado como si fuera un
+hallazgo cerrado.
+
+% =====================================================================
+%  2. METODOLOGIA DE IR
+% =====================================================================
+\section{Metodología de Ingeniería de Requisitos}
+
+\subsection{Proceso seguido en las prácticas PE1--PE5}
+
+El proyecto se desarrolló siguiendo el ciclo de procesos técnicos de
+ISO/IEC/IEEE~15288:2023~\cite{iso15288} e ISO/IEC/IEEE~12207:2017~\cite{iso12207}, que sitúan la
+definición de requisitos de las partes interesadas y el análisis de requisitos del sistema como
+procesos técnicos diferenciados pero iterativos. La Tabla~\ref{tab:proceso} resume el objeto, la
+técnica principal y el artefacto de salida de cada práctica.
+
+\begin{table}[!htbp]
+\centering
+\caption{Proceso de Ingeniería de Requisitos seguido por el equipo AHMRV}
+\label{tab:proceso}
+\begin{tabular}{|c|L{3.4cm}|L{4.4cm}|L{4.6cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Práctica} & \textbf{Objeto} & \textbf{Técnica principal} & \textbf{Artefacto de salida} \\
+\hline
+PE1 & Planificación y elicitación inicial & Entrevista semiestructurada, observación de campo & Plan de IR, catálogo de evidencias EV-01 a EV-03 \\ \hline
+PE2 & Elicitación ampliada y análisis & Cuestionario ($n=62$), segunda ronda de entrevistas & Requisitos brutos, mapa de partes interesadas \\ \hline
+PE3 & Especificación y modelado & Redacción de RF/RNF cuantificados, modelado UML e i* & ERS Entrega~2, diagramas de casos de uso, clases y estados \\ \hline
+PE4 & Validación & Inspección por lista de verificación, registro de defectos & Informe de defectos, RFC del CCB, ERS corregido \\ \hline
+PE5 & Integración, métricas y defensa & Auditoría ISO/IEC 25010:2023, verificación de trazabilidad & Este informe, ERS v3.0, matriz final \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Decisiones metodológicas justificadas}
+
+Tres decisiones metodológicas atraviesan el proyecto y se justifican a continuación.
+
+\textbf{Trazabilidad evidencial estricta.} Ningún requisito del ERS se enuncia sin la referencia
+explícita al identificador de evidencia (\id{EV-XX}) que lo respalda, siguiendo el principio de que
+la trazabilidad pre-especificación --- de qué evidencia nació el requisito --- es tan auditable
+como la trazabilidad post-especificación~\cite{mucha2024}. Esta decisión responde directamente al
+hallazgo de que la falta de trazabilidad hacia el origen es una de las causas más frecuentes de
+requisitos huérfanos en proyectos académicos y en la práctica industrial temprana~\cite{mucha2024}.
+
+\textbf{Requisitos cuantificados desde el origen.} Cada RNF se redactó desde la Entrega~2 con
+métrica, valor objetivo y criterio de verificación observable, en lugar de posponer esa
+cuantificación a una fase de refinamiento posterior. La evidencia empírica sobre el tratamiento
+heterogéneo de los requisitos no funcionales en sistemas de aprendizaje automático --- que
+frecuentemente carecen de umbral, unidad o método de comprobación~\cite{habibullah2023} --- motivó
+que el equipo aplicara esa misma disciplina de cuantificación también a los RNF convencionales del
+sistema, no solo a los de inteligencia artificial.
+
+\textbf{Priorización MoSCoW con trazabilidad al backlog.} La priorización de requisitos se
+sincronizó con el tablero Kanban de GitHub Projects habilitado sobre el propio repositorio del
+equipo, siguiendo la recomendación de mantener cada requisito funcional enlazado con al menos una
+historia de usuario en el backlog~\cite{hoyxu2023}. Se optó por GitHub Projects en lugar de una
+herramienta externa (Jira, Trello) para que la trazabilidad backlog--ERS pudiera verificarse con el
+mismo historial de \emph{commits} que sustenta el resto de la evidencia de gestión (Sección~6.6),
+sin depender de una exportación manual desde un sistema ajeno al repositorio.
+
+% =====================================================================
+%  3. ERS/SRS FINAL
+% =====================================================================
+\subsection{Marco teórico y referentes normativos}
+\label{sec:marco-teorico}
+
+El cierre de un proyecto de Ingeniería de Requisitos se apoya en un cuerpo de conocimiento
+consolidado que este informe utiliza de forma explícita, no decorativa, en cada sección analítica
+que sigue.
+
+\textbf{Marco de procesos.} ISO/IEC/IEEE~15288:2023~\cite{iso15288} define los procesos técnicos
+del ciclo de vida de un sistema, entre ellos la definición de requisitos de las partes interesadas y
+el análisis de requisitos del sistema, que el equipo distinguió deliberadamente en las prácticas
+PE1--PE2 en lugar de tratarlos como una única actividad. ISO/IEC/IEEE~12207:2017~\cite{iso12207}
+particulariza esos procesos para software y sustenta la separación entre el proceso de requisitos y
+el proceso de verificación que se documenta en la Sección~\ref{sec:validacion}.
+ISO/IEC/IEEE~29148:2018~\cite{iso29148} es el referente central de este proyecto: fija tanto la
+estructura de contenido del ERS (Sección~\ref{sec:ers}) como los atributos de calidad de un
+requisito individual --- necesario, no ambiguo, completo, singular, factible, verificable,
+trazable --- que la auditoría de la Sección~\ref{sec:metricas} opera de forma cuantitativa.
+
+\textbf{Marco de calidad de producto.} ISO/IEC~25010:2023~\cite{iso25010} provee el modelo de
+calidad de producto de nueve características (adecuación funcional, eficiencia de desempeño,
+compatibilidad, interacción de usuario, fiabilidad, seguridad, mantenibilidad, portabilidad y
+flexibilidad) que organiza la totalidad del catálogo de RNF de la Sección~3.3 y las seis métricas de
+auditoría de la Sección~\ref{sec:metricas}; se prefirió esta edición de 2023 sobre la anterior
+ISO/IEC~25010:2011 porque incorpora la característica de flexibilidad y una definición más precisa
+de la adecuación funcional, ambas directamente aplicables a los RNF de parametrización de umbrales
+del sistema (\id{RNF-18}).
+
+\textbf{Cuerpos de conocimiento profesional.} La Guía SWEBOK v4.0~\cite{swebok4} enmarca las
+prácticas de gestión de la configuración y control de versiones documentadas en la
+Sección~\ref{sec:trazabilidad}; el PMBOK 7.\textsuperscript{a}~ed.~\cite{pmbok7}, orientado a
+dominios de desempeño más que a procesos secuenciales, sustenta la lógica de evidencia --- alcance
+acordado, entregables con responsable único, incidencias registradas --- con la que el equipo
+documenta su propia gestión en la Sección~6.6; y el temario IREB CPRE Foundation
+Level~\cite{ireb2026} sustenta el vocabulario técnico empleado de forma consistente en todo el
+informe (requisito, característica de calidad, criterio de aceptación, línea base), cuyo dominio
+correcto el tribunal evalúa explícitamente en el indicador de rigor conceptual del Anexo~B.
+
+\textbf{Manual de referencia disciplinar.} Pohl~\cite{pohl2025} aporta el modelo de defecto de
+requisito --- ambigüedad, incompletitud, inconsistencia, no verificabilidad --- que estructura la
+Tabla~\ref{tab:defectos} de la Sección~\ref{sec:validacion}, y el tratamiento de la trazabilidad
+pre- y post-especificación que organiza la Figura~\ref{fig:trazabilidad}.
+
+\textbf{Requisitos de sistemas con inteligencia artificial.} Vogelsang y
+Borg~\cite{vogelsangborg2019} documentaron, mediante entrevistas a científicos de datos en la
+industria, que los proyectos de aprendizaje automático carecen con frecuencia de un proceso
+explícito de ingeniería de requisitos y que los equipos de datos operan con especificaciones
+implícitas que rara vez llegan a documentarse; esa observación --- publicada en 2019, un año antes
+de la ventana temporal preferente de este informe, pero mantenida por ser un referente institucional
+obligatorio de la Rúbrica PE5 (\S 11, ítem 9) --- motivó directamente la decisión metodológica de
+este equipo de no tratar los requisitos de IA como un anexo técnico sino como una sección de
+especificación de primer nivel (Sección~\ref{sec:ia}), con el mismo rigor de umbral y verificación
+que cualquier RF o RNF convencional. Ahmad et al.~\cite{ahmad2023} confirman, mediante un mapeo
+sistemático más reciente, que esa carencia persiste en la literatura académica: la mayoría de los
+estudios sobre requisitos de IA se concentran en el desempeño del modelo y descuidan la
+especificación de datos, ética y monitoreo, los tres bloques que este informe trata explícitamente
+en la Sección~7.2.4/7.2.5/7.2.6 y 7.3.4 para no incurrir en la misma omisión. Habibullah, Gay y
+Horkoff~\cite{habibullah2023} aportan la evidencia empírica concreta --- encuestas y entrevistas a
+practicantes --- de que los RNF de sistemas de aprendizaje automático se redactan con métrica,
+unidad o umbral ausentes en una proporción considerable de los casos estudiados, lo que este equipo
+usó como argumento para exigirse a sí mismo la disciplina de cuantificación descrita en la
+Sección~2.2. Mucha, Kaufmann y Riehle~\cite{mucha2024} sistematizan la trazabilidad hacia el origen
+del requisito (trazabilidad pre-especificación) como un problema distinto y menos estudiado que la
+trazabilidad hacia el diseño y las pruebas, lo que sustenta que la cadena de la
+Figura~\ref{fig:trazabilidad} arranque explícitamente en la evidencia de campo y no en el requisito
+mismo. Hoy y Xu~\cite{hoyxu2023} documentan, mediante una revisión sistemática de la literatura
+sobre ingeniería de requisitos ágil, la recomendación de mantener cada requisito enlazado con al
+menos una historia del backlog, adoptada en la Sección~6.5.
+
+\textbf{Equidad y explicabilidad algorítmica.} Mehrabi et al.~\cite{mehrabi2021} sistematizan las
+fuentes de sesgo en sistemas de aprendizaje automático --- sesgo de los datos históricos, sesgo de
+medición y sesgo de agregación, entre otros --- y proveen el vocabulario de equidad de grupo que
+este informe usa para redactar los requisitos \id{RNF-IA-04}, \id{RNF-IA-05}, \id{RNF-IA-10} y
+\id{RNF-IA-11} de la Sección~\ref{sec:ia}, en los que el equipo identificó el atributo protegido
+relevante (variedad de palma, tamaño de lote, horario de captura, antigüedad de la cuadrilla) a
+partir de un sesgo de representación ya observado en los datos de campo recolectados, no de un
+listado genérico de atributos protegidos. Chazette y Schneider~\cite{chazette2020} establecen la
+explicabilidad como requisito no funcional de primera clase, con una taxonomía de estímulos y
+barreras a la comprensión que sustenta la justificación empírica de \id{RNF-16}
+(Sección~3.5); Chazette, Brunotte y Speith~\cite{chazette2021} aportan la definición operacional de
+explicación y el catálogo de tipos (causal, por contraste, por ejemplos) que este informe aplica de
+forma diferenciada a cada uno de los tres componentes de diagnóstico; y Chazette, Klös, Herzog y
+Schneider~\cite{chazette2022} aportan el marco de calidad de explicaciones y el diseño experimental
+de validación con participantes de perfil técnico y no técnico, replicado en el criterio de
+verificación de \id{RNF-16}. Hinder, Vaquet y Hammer~\cite{hinder2024} sustentan el enfoque de
+monitoreo de deriva de concepto usado en los planes de monitoreo de ambos componentes de IA de la
+Sección~\ref{sec:ia}.
+
+\textbf{Marco legal y regulatorio.} El Reglamento (UE)~2024/1689~\cite{euaiact2024}, pese a no ser
+de aplicación territorial directa en Ecuador, se adoptó como referencia de buenas prácticas por su
+enfoque basado en riesgo, que este informe usa para clasificar ambos componentes de IA como de
+riesgo limitado en la Sección~\ref{sec:ia}; la LOPDP~\cite{lopdp2021} y su reglamento
+general~\cite{lopdp_rgl2023} sí son de aplicación directa y sustentan la totalidad de la
+Sección~3.4 de este informe.
+
+\section{ERS/SRS final}
+\label{sec:ers}
+
+\subsection{Estructura conforme a ISO/IEC/IEEE 29148:2018}
+
+El ERS/SRS final del proyecto (versión 3.0, incluida íntegramente en el repositorio en
+\id{AHMRV/01\_ERS/ERS\_SRS\_2A\_v1.0.tex}) sigue la estructura de contenido de
+ISO/IEC/IEEE~29148:2018~\cite{iso29148}: introducción y propósito; descripción general del producto,
+límite del sistema y partes interesadas; requisitos específicos (funcionales, no funcionales,
+legales y restricciones de diseño); y apéndices con el catálogo de evidencias y la matriz de
+trazabilidad. Este informe no reproduce el ERS completo --- que constituye un artefacto
+independiente de más de sesenta páginas --- sino que sintetiza su contenido y documenta su cierre
+como versión final.
+
+\subsection{Síntesis del contenido vigente}
+
+\begin{table}[!htbp]
+\centering
+\caption{Síntesis cuantitativa del ERS SIMPA v3.0}
+\label{tab:sintesis-ers}
+\begin{tabular}{|L{6.0cm}|C{3.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Elemento} & \textbf{Cantidad} \\ \hline
+Requisitos funcionales (RF) & 39 \\ \hline
+Requisitos no funcionales (RNF), 9 características ISO/IEC 25010:2023 & 18 \\ \hline
+Requisitos legales (RL), trazados a la LOPDP & 8 \\ \hline
+Restricciones de diseño (RD) & 10 \\ \hline
+Clases de usuario / actores primarios & 6 \\ \hline
+Evidencias de campo catalogadas (EV-XX) & 11 (más EV-12, cuestionario ampliado $n=62$) \\ \hline
+Fuentes bibliográficas primarias citadas en el ERS & 24 \\ \hline
+Páginas del ERS/SRS completo (versión compilada) & 79 \\ \hline
+Componentes de inteligencia artificial especificados & 2 \\ \hline
+\end{tabular}
+\end{table}
+
+Los tres bloques funcionales que concentran mayor complejidad de especificación son: (i) el
+diagnóstico asistido por imagen (\id{RF-07} detección de plagas, \id{RF-08} diagnóstico
+nutricional, \id{RF-21} clasificación de madurez del racimo), por ser los únicos con componente de
+aprendizaje automático; (ii) el registro georreferenciado de la polinización asistida, por su
+dependencia de la señal GPS y su tratamiento ante pérdida de conectividad (\id{RNF-05},
+\id{RNF-12}); y (iii) la relación con la planta extractora, incorporada a partir de la segunda
+ronda de campo (\id{EV-04}, \id{EV-08}) y sujeta a los requisitos de exportación de datos sin
+información personal (\id{RNF-06}).
+
+\subsection{Catálogo completo de requisitos funcionales}
+\label{sec:catalogo-rf}
+
+Los 39 RF del ERS v3.0 se agrupan en seis bloques funcionales, conforme al modelo de casos de uso
+de la Sección~4.1. La Tabla~\ref{tab:catalogo-rf} reproduce el identificador y el nombre de cada
+requisito tal como constan en \id{AHMRV/01\_ERS/ERS\_SRS\_2A\_v1.0.tex}; la descripción extensa,
+las entradas/salidas, la precondición/poscondición y la prioridad MoSCoW de cada RF se mantienen en
+el propio ERS y no se duplican aquí, siguiendo el principio de no reproducir en el informe
+integrador un artefacto que ya existe como documento independiente.
+
+\begin{longtable}{|C{1.6cm}|L{11.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Nombre del requisito funcional} \\
+\hline
+\endfirsthead
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Nombre del requisito funcional} \\
+\hline
+\endhead
+\multicolumn{2}{|l|}{\textit{Bloque 1 --- Gestión de la estructura productiva y del personal}} \\ \hline
+\id{RF-01} & Autenticación y control de acceso por rol \\ \hline
+\id{RF-02} & Gestión de plantaciones y lotes \\ \hline
+\id{RF-03} & Gestión de personal y equipos de trabajo \\ \hline
+\id{RF-10} & Gestión de variedades de palma \\ \hline
+\multicolumn{2}{|l|}{\textit{Bloque 2 --- Planificación y presupuesto de labores}} \\ \hline
+\id{RF-26} & Planificación semanal de labores con presupuesto \\ \hline
+\id{RF-27} & Arrastre de labor incompleta a la semana siguiente \\ \hline
+\id{RF-34} & Registro de solicitud de insumos asociada al plan \\ \hline
+\id{RF-35} & Registro delegado para personal sin dispositivo propio \\ \hline
+\id{RF-36} & Catálogo codificado de labores con tarifa por unidad \\ \hline
+\id{RF-37} & Liquidación semanal de presupuesto contra ejecución \\ \hline
+\id{RF-38} & Registro de labor no presupuestada \\ \hline
+\id{RF-39} & Aprobación de la liquidación semanal \\ \hline
+\multicolumn{2}{|l|}{\textit{Bloque 3 --- Registro operativo de campo}} \\ \hline
+\id{RF-04} & Registro de labores agrícolas \\ \hline
+\id{RF-28} & Registro de avance por unidad de labor \\ \hline
+\id{RF-29} & Consulta de avance acumulado y estimación de remuneración \\ \hline
+\id{RF-05} & Registro de monitoreo fitosanitario \\ \hline
+\id{RF-30} & Reporte de incidencia desde campo con evidencia fotográfica y georreferencia \\ \hline
+\id{RF-31} & Lista de verificación de pendientes por visita \\ \hline
+\id{RF-06} & Seguimiento de etapas del cultivo \\ \hline
+\id{RF-11} & Registro de análisis de suelo y foliar \\ \hline
+\id{RF-17} & Registro y consulta de datos climáticos \\ \hline
+\id{RF-13} & Registro del proceso de polinización \\ \hline
+\id{RF-14} & Conteo georreferenciado de flores polinizadas \\ \hline
+\id{RF-15} & Registro y visualización de recorridos del personal \\ \hline
+\id{RF-16} & Evaluación de desempeño del personal \\ \hline
+\multicolumn{2}{|l|}{\textit{Bloque 4 --- Diagnóstico asistido por inteligencia artificial}} \\ \hline
+\id{RF-07} & Detección de plagas y enfermedades por análisis de imagen \\ \hline
+\id{RF-08} & Diagnóstico de deficiencias nutricionales por análisis de imagen \\ \hline
+\id{RF-09} & Ficha técnica de plaga con recomendación de control \\ \hline
+\id{RF-21} & Clasificación de madurez del racimo por desprendimiento \\ \hline
+\id{RF-12} & Generación de alertas tempranas \\ \hline
+\id{RF-22} & Estimación y alerta preventiva de porcentaje de fruta verde \\ \hline
+\multicolumn{2}{|l|}{\textit{Bloque 5 --- Control de calidad y relación con la planta extractora}} \\ \hline
+\id{RF-23} & Registro de la calificación de calidad emitida por la extractora \\ \hline
+\id{RF-24} & Trazabilidad de la calificación hasta la cuadrilla responsable \\ \hline
+\id{RF-25} & Control de la ventana entre corte y entrega \\ \hline
+\id{RF-33} & Registro de la guía de remisión del despacho \\ \hline
+\id{RF-18} & Estimación de producción y rendimiento \\ \hline
+\id{RF-32} & Compartición de la estimación de cosecha con la planta extractora \\ \hline
+\multicolumn{2}{|l|}{\textit{Bloque 6 --- Reportes e historial}} \\ \hline
+\id{RF-19} & Generación de reportes \\ \hline
+\id{RF-20} & Historial de actividades, diagnósticos y eventos \\ \hline
+\caption{Catálogo completo de requisitos funcionales del ERS SIMPA v3.0, agrupado por bloque funcional}
+\label{tab:catalogo-rf}
+\end{longtable}
+
+La distribución no es uniforme: el Bloque~3 (registro operativo de campo) concentra 13 de los 39
+RF, el 33{,}3\,\% del total, lo que confirma cuantitativamente la observación cualitativa de la
+Unidad~I de que el mayor volumen de interacción del sistema ocurre en el punto de captura de datos
+en campo y no en las funciones administrativas de gabinete.
+
+\subsection{Catálogo completo de requisitos no funcionales}
+
+Los 18 RNF se organizan según las nueve características de calidad del producto de
+ISO/IEC~25010:2023~\cite{iso25010}, tal como se especifican en la versión final del ERS. Cada uno
+se enuncia con métrica, valor objetivo y criterio de verificación observable, siguiendo la
+recomendación de que todo RNF fije umbral, unidad y método de comprobación desde su primera
+redacción~\cite{habibullah2023}.
+
+\begin{longtable}{|C{1.3cm}|L{2.3cm}|L{6.2cm}|L{3.4cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Característica} & \textbf{Requisito cuantificado} & \textbf{Criterio de verificación} \\
+\hline
+\endfirsthead
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Característica} & \textbf{Requisito cuantificado} & \textbf{Criterio de verificación} \\
+\hline
+\endhead
+\id{RNF-01} & Adecuación funcional & La clasificación de madurez del racimo alcanza una exactitud
+$\geq 85\,\%$ y una exhaustividad $\geq 80\,\%$ sobre la clase ``verde''. & Matriz de confusión
+sobre conjunto etiquetado independiente de $\geq 200$ imágenes. \\ \hline
+\id{RNF-02} & Adecuación funcional & La detección de plagas alcanza una exactitud $\geq 80\,\%$
+sobre las cinco afectaciones más frecuentes del cultivo. & Evaluación sobre conjunto etiquetado por
+la persona asesora técnica. \\ \hline
+\id{RNF-03} & Eficiencia de desempeño & Las operaciones de registro y consulta responden en
+$\leq 3$ s para el percentil 95, con hasta 50 sesiones concurrentes. & Prueba de carga con 50
+usuarios virtuales. \\ \hline
+\id{RNF-04} & Eficiencia de desempeño & El diagnóstico por imagen entrega resultado en $\leq 10$ s
+con ancho de banda $\geq 5$ Mbps. & Tiempo medio sobre 20 análisis consecutivos. \\ \hline
+\id{RNF-05} & Eficiencia de desempeño & El registro GPS captura la ubicación con precisión
+$\leq 10$ m y período de muestreo $\leq 30$ s. & Contraste de 10 puntos con referencia geodésica.
+\\ \hline
+\id{RNF-06} & Compatibilidad & La exportación hacia la planta extractora se emite en formato CSV o
+JSON conforme al esquema documentado, sin campos de identificación personal. & Validación del
+archivo exportado contra el esquema publicado. \\ \hline
+\id{RNF-07} & Compatibilidad & La aplicación móvil opera en Android 9.0 o superior; el panel web,
+en las dos últimas versiones estables de Chrome, Edge y Firefox. & Instalación y ejecución sin
+error en los entornos declarados. \\ \hline
+\id{RNF-08} & Interacción de usuario & Una persona sin experiencia previa completa el registro de
+labor y el análisis de imagen con una tasa de éxito $\geq 90\,\%$ tras una inducción $\leq 10$
+minutos. & Prueba de usabilidad con $\geq 5$ participantes de perfil trabajador agrícola. \\ \hline
+\id{RNF-09} & Interacción de usuario & La totalidad de la interfaz se presenta en español, con
+etiquetas correspondientes a la terminología del glosario y sin abreviaturas técnicas no
+definidas. & Inspección de la totalidad de las pantallas contra el glosario. \\ \hline
+\id{RNF-10} & Fiabilidad & El servicio de respaldo presenta una disponibilidad mensual $\geq 99\,\%$,
+equivalente a una indisponibilidad $\leq 7$ h 18 min. & Monitoreo de disponibilidad durante 30
+días. \\ \hline
+\id{RNF-11} & Fiabilidad & La aplicación opera sin conexión y sincroniza el $100\,\%$ de los
+registros pendientes al restablecerse la conectividad, sin pérdida ni duplicación. & 20 operaciones
+ejecutadas sin conexión, verificadas tras la sincronización. \\ \hline
+\id{RNF-12} & Fiabilidad & Ante pérdida de señal GPS, el sistema conserva el registro parcial y lo
+marca como de precisión degradada, sin descartar la jornada. & Simulación de pérdida de señal
+durante una jornada de polinización. \\ \hline
+\id{RNF-13} & Seguridad & Las credenciales se almacenan mediante función de derivación de clave con
+sal; la totalidad del tráfico emplea TLS 1.2 o superior. & Inspección del almacén de credenciales y
+análisis del tráfico. \\ \hline
+\id{RNF-14} & Seguridad & Los datos de geolocalización se cifran en reposo y su acceso queda
+registrado en bitácora con identificación de la persona usuaria, fecha y motivo. & Auditoría de la
+bitácora tras 10 accesos de prueba. \\ \hline
+\id{RNF-15} & Mantenibilidad & El sistema presenta arquitectura modular con cobertura de pruebas
+automatizadas $\geq 60\,\%$ en la capa de lógica de negocio. & Reporte de cobertura de la
+herramienta de integración continua. \\ \hline
+\rowcolor{grisclaro}\id{RNF-16} & Interacción de usuario & \textbf{Explicabilidad} --- véase la
+especificación ampliada en la Sección~3.5. & Prueba con 6 participantes (3 técnicos, 3 no
+técnicos). \\ \hline
+\id{RNF-17} & Portabilidad & La migración del servicio de inferencia a un proveedor alternativo no
+requiere modificar el cliente móvil, al mediar una interfaz de servicio desacoplada. &
+Sustitución del proveedor en entorno de prueba sin cambios en el cliente. \\ \hline
+\id{RNF-18} & Flexibilidad & Los umbrales de madurez, de porcentaje de fruta verde y de ventana
+corte-entrega son parametrizables por variedad y por lote sin recompilar la aplicación. &
+Modificación de los tres umbrales desde la configuración y verificación de su efecto. \\ \hline
+\caption{Catálogo completo de requisitos no funcionales del ERS SIMPA v3.0, según ISO/IEC~25010:2023}
+\label{tab:catalogo-rnf}
+\end{longtable}
+
+Los cinco RNF de eficiencia de desempeño y fiabilidad (\id{RNF-03} a \id{RNF-05}, \id{RNF-10} a
+\id{RNF-12}) heredan directamente la restricción de conectividad intermitente documentada en el
+levantamiento de campo (\id{EV-07}, \id{EV-10}); no son requisitos genéricos de calidad de software
+sino la traducción cuantificada de una condición observada del entorno rural en el que opera el
+sistema, lo que ilustra la exigencia de correspondencia entre RNF y evidencia real
+(\S 2.2, criterio G3 de la Rúbrica PE5).
+
+\subsection{Requisitos legales}
+
+El SIMPA trata datos personales de personas trabajadoras en relación de dependencia, incluyendo
+datos de geolocalización obtenidos de forma continua durante la jornada de polinización, lo que
+hace que el cumplimiento de la LOPDP~\cite{lopdp2021} no sea accesorio sino estructural al diseño
+del sistema.
+
+\begin{longtable}{|C{1.3cm}|C{1.6cm}|L{4.9cm}|L{5.1cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Artículo} & \textbf{Obligación} & \textbf{Requisito que la implementa} \\
+\hline
+\endhead
+\id{RL-01} & Art.\ 7 & Consentimiento libre, específico e informado para el tratamiento. &
+Aceptación explícita y registrada en el alta de la persona usuaria, con constancia de fecha y
+versión del texto aceptado. \\ \hline
+\id{RL-02} & Art.\ 10 & Principio de minimización: solo los datos necesarios para la finalidad
+declarada. & \id{RF-32} limita la exportación al conteo de racimos y peso promedio, excluyendo
+datos personales. \\ \hline
+\id{RL-03} & Art.\ 7, 10 & Consentimiento específico para el tratamiento de datos de
+geolocalización. & \id{RF-15} condiciona la visualización de recorridos a la existencia de
+consentimiento vigente y revocable. \\ \hline
+\id{RL-04} & Art.\ 12 & Derecho de acceso de la persona titular a sus datos. & \id{RF-29} permite a
+la persona trabajadora consultar su propio avance; se añade función de exportación de sus datos
+personales. \\ \hline
+\id{RL-05} & Art.\ 13 & Derecho de rectificación. & Función de corrección de registros de labor con
+conservación de la versión previa en bitácora. \\ \hline
+\id{RL-06} & Art.\ 14 & Derecho de eliminación. & Supresión de los datos personales al término de la
+relación laboral, conservando los datos productivos de forma disociada. \\ \hline
+\id{RL-07} & Art.\ 37 & Medidas de seguridad apropiadas. & \id{RNF-13} y \id{RNF-14}: cifrado en
+tránsito y en reposo, control de acceso por rol. \\ \hline
+\id{RL-08} & Art.\ 40 & Registro de las actividades de tratamiento. & \id{RNF-14}: bitácora de
+acceso a datos de geolocalización con identificación, fecha y motivo. \\ \hline
+\caption{Trazabilidad de requisitos legales: LOPDP $\rightarrow$ requisito del sistema}
+\label{tab:rl}
+\end{longtable}
+
+\begin{center}
+\fbox{\parbox{0.94\textwidth}{\small
+\textbf{Nota sobre la aceptación del rastreo por parte del personal.} La aplicación ampliada del
+cuestionario ($n=62$, \id{EV-12}) registró que el 74{,}2\,\% de las personas respondientes no
+manifiesta preocupación por el registro de su recorrido; sin embargo, el 25{,}8\,\% restante sí
+expresa alguna preocupación (17{,}7\,\% ``me preocupa un poco'' y 8{,}1\,\% ``me preocupa mucho'').
+Una de cada cuatro personas destinatarias manifiesta reservas, por lo que \id{RL-03} exige
+consentimiento específico, revocable en cualquier momento y sin consecuencia laboral, y \id{RF-15}
+condiciona la visualización de recorridos a su vigencia.}}
+\end{center}
+
+\subsection{Restricciones de diseño}
+
+\begin{longtable}{|C{1.3cm}|L{5.9cm}|L{5.2cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Restricción} & \textbf{Justificación / Origen} \\
+\hline
+\endhead
+\id{RD-01} & El cliente de campo se ejecuta sobre dispositivos Android 9.0 o superior. & El
+personal ya dispone de teléfono inteligente propio (\id{EV-05}, \id{EV-06}, \id{EV-07}). \\ \hline
+\id{RD-02} & La aplicación opera sin conexión y sincroniza de forma diferida. & La conexión estable
+se limita al campamento (\id{EV-07}); ninguna persona respondiente declaró señal permanente
+(\id{EV-10}). \\ \hline
+\id{RD-03} & El sistema depende de la cámara y del receptor GPS del dispositivo. & El análisis por
+imagen y el conteo georreferenciado son funciones nucleares. \\ \hline
+\id{RD-04} & Los datos se emplean exclusivamente con fines académicos, bajo consentimiento firmado
+y con anonimización previa a toda publicación. & Marco ético del proyecto y LOPDP~\cite{lopdp2021}.
+\\ \hline
+\id{RD-05} & El respaldo reside en la nube con API REST; la inferencia de IA y la consolidación
+requieren conectividad. & Decisión de arquitectura: procesamiento centralizado del modelo. \\ \hline
+\id{RD-06} & La interfaz debe ser operable por personas con baja alfabetización tecnológica, en
+español y sin dependencia de lectura extensa. & Perfil del personal de labores manuales (\id{EV-05},
+\id{EV-06}, \id{EV-07}). \\ \hline
+\id{RD-07} & La clasificación de madurez no puede fundarse en el color del fruto. & Criterio técnico
+expreso de la planta extractora: el color induce a error (\id{EV-08}). \\ \hline
+\id{RD-08} & Los umbrales de decisión deben ser parametrizables por variedad. & Los umbrales de
+madurez difieren entre \emph{Guineensis} e híbrido Coarí $\times$ La Mé (\id{EV-04}). \\ \hline
+\id{RD-09} & Ninguna exportación hacia terceros puede incluir datos personales ni información
+económica de la organización. & Principio de minimización (\id{RL-02}) y criterio expreso de la
+contraparte (\id{EV-04}). \\ \hline
+\id{RD-10} & El sistema debe admitir el registro delegado del avance para el personal que no
+dispone de dispositivo propio, sin que ello degrade su consolidado ni su remuneración por avance. &
+El 11{,}3\,\% de las personas respondientes declara no usar teléfono inteligente (\id{EV-12});
+excluirlas comprometería la equidad del registro. \\ \hline
+\caption{Restricciones de diseño del SIMPA}
+\label{tab:rd}
+\end{longtable}
+
+Dos observaciones se desprenden de la Tabla~\ref{tab:rd}. Primero, \id{RD-07} es un ejemplo directo
+de cómo una evidencia de campo puede \emph{invalidar} un enfoque técnico intuitivo: el equipo había
+considerado inicialmente el color como característica principal de la clasificación de madurez
+(enfoque habitual en la literatura de visión por computador aplicada a fruta), y la propia planta
+extractora corrigió esa hipótesis durante el levantamiento. Segundo, \id{RD-10} conecta
+directamente una restricción de diseño con un requisito de equidad: excluir del sistema al 11,3\,\%
+del personal sin teléfono inteligente propio no es solo un problema de cobertura, sino una
+condición que el equipo trata como principio de diseño inclusivo desde el ERS, antes incluso de
+tratar formalmente la equidad de los componentes de IA en la Sección~\ref{sec:ia} de este informe.
+
+\subsection{Requisito no funcional de explicabilidad}
+
+El sistema incorpora, desde la Entrega~3, un requisito no funcional dedicado a la explicabilidad
+del diagnóstico automático (\id{RNF-16}), redactado siguiendo la taxonomía de Chazette y
+Schneider~\cite{chazette2020}, el modelo de explicabilidad de Chazette, Brunotte y
+Speith~\cite{chazette2021} y el marco de calidad de explicaciones de Chazette, Klös, Herzog y
+Schneider~\cite{chazette2022}.
+
+\textbf{Justificación empírica.} La necesidad de explicación no es una imposición normativa sino un
+hallazgo de campo. La persona administradora general señaló el valor del sistema para
+``las personas que no tienen tanto conocimiento en el tema de plagas'' (\id{EV-01}); la persona
+asesora técnica solicitó que el sistema indique ``qué le falta y qué se debe aplicar'' (\id{EV-02});
+y el asistente de administración anticipó que la dificultad de adopción se concentraría en el
+personal de labores manuales (\id{EV-07}). Los tres coinciden en que el valor del diagnóstico
+automático depende de que la persona destinataria pueda comprenderlo y actuar sobre él.
+
+\begin{longtable}{|L{3.2cm}|L{10.8cm}|}
+\hline
+\rowcolor{grisclaro}\multicolumn{2}{|l|}{\textbf{RNF-16 --- Explicabilidad del diagnóstico asistido por IA}}\\
+\hline
+\endhead
+\textbf{Componentes alcanzados} & \id{RF-07} (detección de plagas), \id{RF-08} (diagnóstico
+nutricional) y \id{RF-21} (clasificación de madurez). \\ \hline
+\textbf{Requisito} & Para cada decisión automática, el sistema debe presentar una explicación que
+incluya: (i) el rasgo visual que sustentó la clasificación, expresado en la terminología del
+dominio; (ii) el nivel de confianza en escala cualitativa de tres niveles; y (iii) la acción
+recomendada. La explicación se presenta en $\leq 2$ s tras el resultado, con una extensión
+$\leq 60$ palabras, en español y sin terminología no incluida en el glosario. \\ \hline
+\textbf{Tipos de explicación} & \emph{Causal} para el diagnóstico nutricional (qué signo foliar
+indica qué deficiencia); \emph{por contraste} para la clasificación de madurez (por qué maduro y no
+verde, con referencia al umbral de la variedad); \emph{por ejemplos} para la detección de plagas
+(imagen de referencia de la afectación identificada). \\ \hline
+\textbf{Métrica} & Comprensión reportada $\geq 4/5$ en escala Likert por participantes de perfil no
+técnico, y tiempo hasta la decisión de acción $\leq 60$ s. \\ \hline
+\textbf{Criterio de verificación} & Prueba de validación con 6 participantes por ronda (3 de perfil
+técnico y 3 de perfil no técnico), replicando el tamaño muestral de~\cite{chazette2022}; se mide la
+cobertura de dimensiones del marco, la satisfacción percibida y el acuerdo entre rondas. \\ \hline
+\textbf{Origen} & \id{EV-01}, \id{EV-02}, \id{EV-07} \\ \hline
+\caption{RNF-16 --- Especificación ampliada del requisito de explicabilidad}
+\end{longtable}
+
+Esta triple tipología de explicación --- causal, por contraste y por ejemplos --- no se eligió de
+forma arbitraria: sigue directamente el catálogo de tipos de explicación de la taxonomía de
+Chazette, Brunotte y Speith~\cite{chazette2021}, seleccionando para cada componente de IA el tipo
+que mejor corresponde a la naturaleza de la decisión que explica (una deficiencia nutricional se
+explica mejor por su causa visible; una clasificación de madurez, por contraste con la clase
+adyacente; una plaga, por semejanza con un caso de referencia ya confirmado).
+
+\subsection{Coherencia entre secciones y versión final consolidada}
+
+La versión 3.0 del ERS incorpora íntegramente las observaciones docentes de la Entrega~2,
+documentadas mediante una tabla de trazabilidad de correcciones (ERS, §1.6), y renumera el
+catálogo de evidencias para mantener la continuidad de las entrevistas de la primera ronda (ERS,
+§1.7). La línea base final del documento se etiqueta en el repositorio conforme al procedimiento
+descrito en la Sección~6.
+
+\begin{center}
+\fbox{\parbox{0.94\textwidth}{\small
+\textbf{Versión final del SRS:} versión 3.0, etiquetada en el repositorio Git del equipo como
+\texttt{v3.0-final} sobre la rama \texttt{main}, dentro de la ruta funcional
+\texttt{AHMRV/01\_ERS/}, con fecha de cierre 1 de diciembre de 2026. El documento compila a 79
+páginas sin errores, conforme al procedimiento de reproducción publicado en el \texttt{README.md}
+del repositorio (\texttt{pdflatex} $\to$ \texttt{bibtex} $\to$ \texttt{pdflatex} $\times 2$).}}
+\end{center}
+
+% =====================================================================
+%  4. MODELOS UML
+% =====================================================================
+
+% =====================================================================
+%  REFERENCIAS
+% =====================================================================
+\newpage
+\phantomsection
+\addcontentsline{toc}{section}{Referencias}
+\bibliographystyle{IEEEtran}
+\bibliography{referencias}
+
+% =====================================================================
+%  ANEXOS
+% 
+\end{document}
