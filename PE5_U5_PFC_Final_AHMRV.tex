@@ -791,6 +791,356 @@ del repositorio (\texttt{pdflatex} $\to$ \texttt{bibtex} $\to$ \texttt{pdflatex}
 % =====================================================================
 %  4. MODELOS UML
 % =====================================================================
+\section{Modelos UML}
+\label{sec:uml}
+
+Los modelos de casos de uso, clases, estados y el modelado organizacional i* elaborados en la
+Entrega~2 (PE3) se mantienen en el repositorio bajo \id{AHMRV/03\_Modelado/} y se referencian, no se
+reproducen, en este informe integrador para evitar duplicación de contenido entre artefactos. La
+lectura interpretativa que sigue conecta cada modelo con su función en la cadena de trazabilidad de
+la Sección~\ref{sec:trazabilidad} y no repite los diagramas ya publicados en esa carpeta.
+
+\subsection{Actores del sistema}
+
+El modelo distingue seis actores primarios, cada uno anclado en una evidencia de campo distinta, lo
+que evita que el catálogo de actores sea una enumeración de roles genéricos de un sistema agrícola
+cualquiera.
+
+\begin{longtable}{|L{3.0cm}|L{9.6cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Actor} & \textbf{Rol e interacción principal con el sistema} \\
+\hline
+\endhead
+Administrador general & Configura la estructura productiva (\id{RF-02}, \id{RF-10}), aprueba
+liquidaciones semanales (\id{RF-39}) y consulta reportes agregados (\id{RF-19}). Es la persona
+entrevistada en \id{EV-01}, cuya observación sobre el valor del sistema para quienes ``no tienen
+tanto conocimiento en el tema de plagas'' origina directamente \id{RNF-16}. \\ \hline
+Asesor técnico & Verifica los diagnósticos automáticos derivados por baja confianza (\id{RF-IA-02}),
+mantiene el catálogo de plagas (\id{RF-09}) y realiza el seguimiento fitosanitario (\id{RF-05}).
+Persona entrevistada en \id{EV-02}. \\ \hline
+Personal de campo / cuadrilla & Registra labores (\id{RF-04}), reporta incidencias con evidencia
+fotográfica (\id{RF-30}) y ejecuta la polinización asistida (\id{RF-13}, \id{RF-14}). Es el actor
+con menor alfabetización digital documentada (\id{EV-05}, \id{EV-06}), origen directo de
+\id{RD-06} y \id{RD-10}. \\ \hline
+Asistente de administración & Realiza el registro delegado para personal sin dispositivo propio
+(\id{RF-35}) y apoya la liquidación semanal (\id{RF-37}, \id{RF-38}). Persona entrevistada en
+\id{EV-07}, cuya anticipación sobre la dificultad de adopción del personal de labores manuales
+motivó \id{RD-06}. \\ \hline
+Planta extractora (Extractora R) & Actor externo que recibe la estimación de cosecha (\id{RF-32}) y
+emite la calificación de calidad del lote (\id{RF-23}), calificación que el sistema traza hasta la
+cuadrilla responsable (\id{RF-24}). Su criterio técnico sobre el color del fruto originó \id{RD-07}.
+\\ \hline
+Sistema de inferencia de IA & Actor no humano que ejecuta la clasificación de los tres componentes
+de diagnóstico (\id{RF-07}, \id{RF-08}, \id{RF-21}) y expone su resultado mediante la interfaz de
+servicio desacoplada exigida por \id{RNF-17}. \\ \hline
+\caption{Actores del sistema SIMPA y su anclaje evidencial}
+\label{tab:actores}
+\end{longtable}
+
+\subsection{Diagrama de casos de uso}
+
+El diagrama de casos de uso agrupa las funciones del sistema en los seis bloques descritos en la
+Sección~3.2: gestión de la estructura productiva, planificación y presupuesto de labores, registro
+operativo de campo, diagnóstico asistido por IA, control de calidad con la extractora, y reportes.
+Cada caso de uso realiza uno o más requisitos funcionales y es el primer eslabón de la trazabilidad
+post-especificación (véase Figura~\ref{fig:trazabilidad}). Las relaciones \emph{include} más
+relevantes conectan el caso de uso ``Analizar imagen de campo'' con los tres casos de uso de
+diagnóstico específico (plaga, deficiencia nutricional, madurez), evitando triplicar la lógica de
+captura y envío de imagen; la relación \emph{extend} más relevante conecta ``Registrar labor'' con
+``Reportar incidencia con evidencia fotográfica'', que solo se activa cuando la persona usuaria
+detecta una anomalía durante el registro rutinario.
+
+\subsection{Diagrama de clases}
+
+El modelo de dominio distingue las clases operativas (Plantación, Lote, Labor, Polinización,
+Diagnóstico, Ticket de Pesaje) de las clases de soporte a la inteligencia artificial (Modelo de
+Inferencia, Conjunto de Evaluación, Registro de Predicción), estas últimas incorporadas para dar
+soporte estructural a los requisitos de la Sección~\ref{sec:ia}. La clase \textbf{Diagnóstico} es el
+punto de integración entre ambos subdominios: hereda los atributos comunes de fecha, lote y persona
+que registra, y se especializa en tres subclases (DiagnósticoPlaga, DiagnósticoNutricional,
+ClasificaciónMadurez) que comparten la asociación con la clase \textbf{Explicación}, introducida
+específicamente para dar soporte a \id{RNF-16} y evitar que la explicación quede como un campo de
+texto libre sin estructura verificable. La clase \textbf{RegistroPredicción} asocia cada inferencia
+con su nivel de confianza y su estado de verificación humana, lo que permite calcular directamente
+las métricas de rendimiento y equidad de la Sección~\ref{sec:ia} a partir del modelo de datos, sin
+requerir un mecanismo de auditoría externo al sistema.
+
+\subsection{Diagrama de estados}
+
+El diagrama de estados relevante para la auditoría de este informe es el del ciclo de vida del
+diagnóstico automático: \emph{capturado} $\to$ \emph{en inferencia} $\to$ \emph{explicado} $\to$
+\emph{confirmado o descartado por la persona usuaria}. Este último estado --- confirmación o
+descarte humano --- es el punto de supervisión exigido por el requisito ético de la
+Sección~\ref{sec:ia}: ningún diagnóstico automático transiciona directamente a un estado de acción
+sobre el cultivo sin pasar por la confirmación humana, lo que constituye la implementación concreta,
+a nivel de modelo de estados, del principio de supervisión humana declarado en la
+Sección~7.2.5/7.3.4. El estado \emph{pendiente de verificación humana}, alcanzable únicamente desde
+\emph{en inferencia} cuando el nivel de confianza es inferior al umbral operativo (\id{RF-IA-02}),
+es el estado que activa la notificación al asesor técnico dentro de las 24 horas siguientes.
+
+\subsection{Modelado organizacional i*}
+
+El modelo i* elaborado en la Entrega~2 documenta las dependencias estratégicas entre el
+administrador general, el asesor técnico, el personal de campo y la planta extractora, y sustenta
+la priorización MoSCoW aplicada a los requisitos que reducen la dependencia actual de la
+comunicación informal por mensajería. La dependencia estratégica más relevante para este informe es
+la que conecta al personal de campo con el asesor técnico a través del \emph{softgoal}
+``comprender el diagnóstico sin depender de una explicación verbal posterior'', que el modelo i*
+formalizó como una dependencia \emph{soft} incumplida por el proceso manual vigente y que \id{RNF-16}
+resuelve como una dependencia satisfecha por el sistema.
+
+% =====================================================================
+%  5. VALIDACION
+% =====================================================================
+\section{Validación}
+\label{sec:validacion}
+
+\subsection{Inspección de la PE4}
+
+La inspección de la Entrega~2 se realizó mediante lista de verificación sobre los criterios de
+completitud, consistencia, verificabilidad y trazabilidad hacia el origen, siguiendo el modelo de
+defecto de requisito de Pohl~\cite{pohl2025} y los atributos de calidad de un requisito individual
+de ISO/IEC/IEEE~29148:2018~\cite{iso29148}. La Tabla~\ref{tab:checklist} enumera los ocho criterios
+efectivamente aplicados a cada uno de los 69 requisitos durante la inspección.
+
+\begin{table}[!htbp]
+\centering
+\caption{Criterios de la lista de verificación de inspección}
+\label{tab:checklist}
+\begin{tabular}{|C{1.0cm}|L{11.6cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{\#} & \textbf{Criterio de inspección} \\ \hline
+1 & ¿El requisito tiene un identificador único que no colisiona con ningún otro? \\ \hline
+2 & ¿Está redactado con sujeto, verbo modal y condición observable, sin adjetivos vagos
+(``rápido'', ``fácil'', ``adecuado'')? \\ \hline
+3 & ¿Declara fuente de evidencia (\id{EV-XX}) o se marca explícitamente como derivado? \\ \hline
+4 & ¿Tiene prioridad MoSCoW asignada y justificada? \\ \hline
+5 & Si es RNF, ¿declara métrica, unidad y umbral numérico verificable? \\ \hline
+6 & ¿Tiene al menos un criterio de aceptación expresado en formato BDD o, si es una restricción de
+hardware, un criterio de inspección equivalente admitido? \\ \hline
+7 & ¿No contradice a ningún otro requisito del mismo documento? \\ \hline
+8 & ¿Está enlazado a al menos un caso de uso, clase o proceso del modelo, salvo excepción
+justificada? \\ \hline
+\end{tabular}
+\end{table}
+
+La Tabla~\ref{tab:defectos} resume el resultado agregado de aplicar estos ocho criterios.
+
+\begin{table}[!htbp]
+\centering
+\caption{Resultado de la inspección PE4 y de la re-inspección PE5}
+\label{tab:defectos}
+\begin{tabular}{|L{4.6cm}|C{2.6cm}|C{2.6cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Indicador} & \textbf{Inspección PE4} & \textbf{Re-inspección PE5} \\ \hline
+Defectos de ambigüedad & 6 & 1 \\ \hline
+Defectos de no verificabilidad & 5 & 0 \\ \hline
+Defectos de inconsistencia & 3 & 1 \\ \hline
+Requisitos huérfanos detectados & 4 & 1 \\ \hline
+Total de defectos & 18 & 3 \\ \hline
+\end{tabular}
+\end{table}
+
+De los 18 defectos originales, 15 se cerraron mediante corrección directa del ERS antes de la
+Entrega~3. Los 3 defectos residuales que reaparecen en la re-inspección son: una ambigüedad menor
+en la redacción de \id{RNF-11} (uso del adverbio ``rápidamente'' sin unidad, corregido en la
+re-inspección al reemplazarlo por el umbral ya definido en \id{RNF-05}), una inconsistencia de
+nomenclatura entre ``lote'' y ``parcela'' usados como sinónimos en dos requisitos distintos del
+bloque de polinización (unificados a ``lote'' en la versión 3.0), y un requisito huérfano
+correspondiente a \id{RNF-14} (climatización del almacenamiento de insumos), que no contaba con
+caso de uso asociado por tratarse de una restricción operativa sin interacción directa de usuario;
+se resolvió enlazándolo al proceso DFD de ``Registro de insumos'' en lugar de a un caso de uso.
+
+\subsection{Correcciones y RFC}
+
+Toda corrección derivada de un defecto crítico se procesó como una solicitud de cambio (RFC) ante
+el comité de control de cambios (CCB) interno del equipo, con la decisión --- aprobado, rechazado
+o diferido --- registrada junto con su justificación en \id{AHMRV/04\_Trazabilidad/RFC\_registro.md}. El
+Anexo~B recoge la pregunta de defensa asociada a este registro (pregunta 14).
+
+\subsection{Defecto residual y métrica de corrección}
+
+El resultado de la re-inspección alimenta directamente la métrica~M6 de la Sección~8: los defectos
+que sobreviven a la corrección de la PE4 y reaparecen en el ERS entregado en la PE5 se cuentan como
+defectos residuales, no se descartan ni se reclasifican como mejoras futuras.
+
+% =====================================================================
+%  6. GESTION Y TRAZABILIDAD
+% =====================================================================
+\section{Gestión y trazabilidad}
+\label{sec:trazabilidad}
+
+\subsection{Línea base y control de cambios}
+
+La línea base final del ERS se congela en la versión 3.0 y se etiqueta en el repositorio Git del
+proyecto conforme a la práctica de gestión de la configuración descrita en SWEBOK
+v4.0~\cite{swebok4}. Todo cambio posterior a esa etiqueta que afecte a un requisito ya
+especificado se procesa mediante RFC (Sección~5.2), nunca mediante edición directa del documento
+congelado.
+
+\subsection{Cadena de trazabilidad end-to-end}
+
+La Figura~\ref{fig:trazabilidad} representa la cadena mínima exigida por la guía de la PE5:
+\emph{Fuente/Stakeholder $\to$ RF $\to$ CU $\to$ Clase UML $\to$ Proceso DFD/Estado $\to$ Criterio
+BDD $\to$ Caso de prueba conceptual}, con la sincronización adicional hacia la historia de usuario
+del backlog. La porción anterior al requisito es la trazabilidad pre-especificación; la posterior,
+la trazabilidad post-especificación~\cite{mucha2024}.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=1.0\textwidth]{figuras/trazabilidad_end_to_end}
+\caption{Cadena de trazabilidad end-to-end aplicada al ERS de SIMPA.}
+\label{fig:trazabilidad}
+\end{figure}
+
+\subsection{Matriz de trazabilidad final}
+
+La matriz de trazabilidad final --- con una fila por requisito y las columnas de la
+Tabla~\ref{tab:matriz-cols} --- se mantiene como hoja de cálculo legible en
+\id{AHMRV/04\_Trazabilidad/Matriz\_Trazabilidad\_Final.xlsx} y se referencia aquí sin reproducirse en su
+totalidad, conforme a la recomendación de la guía de no incluir capturas ilegibles.
+
+\begin{table}[!htbp]
+\centering
+\caption{Columnas de la matriz de trazabilidad final}
+\label{tab:matriz-cols}
+\begin{tabular}{|L{2.6cm}|L{10.6cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Columna} & \textbf{Contenido} \\ \hline
+RF/RNF & Identificador único del requisito \\ \hline
+Fuente & Evidencia o \emph{stakeholder} de origen (\id{EV-XX}) \\ \hline
+CU & Casos de uso que lo realizan \\ \hline
+Clase UML & Clases del modelo de dominio implicadas \\ \hline
+Proceso DFD / Estado & Proceso o transición de estado correspondiente \\ \hline
+Criterio BDD & Criterio de aceptación Dado-Cuando-Entonces \\ \hline
+CP & Caso de prueba conceptual \\ \hline
+Historia & Historia del backlog sincronizada \\ \hline
+Estado de la traza & Completa / rota / huérfana, con la acción tomada \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Extracto ilustrativo de la matriz de trazabilidad}
+
+La Tabla~\ref{tab:extracto-matriz} reproduce un extracto de 14 filas representativas de la matriz
+completa (69 filas), seleccionadas para mostrar al menos un requisito de cada bloque funcional de
+la Sección~3.2, incluyendo los tres casos con cadena corregida durante esta auditoría. El resto de
+la matriz sigue el mismo patrón de columnas y se consulta íntegra en el archivo referenciado más
+arriba.
+
+{\small
+\begin{longtable}{|C{1.4cm}|C{1.3cm}|C{1.3cm}|C{1.9cm}|C{1.6cm}|C{1.3cm}|C{1.5cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{RF/RNF} & \textbf{Fuente} & \textbf{CU} & \textbf{Clase UML} &
+\textbf{Proceso/Estado} & \textbf{CP} & \textbf{Estado} \\
+\hline
+\endfirsthead
+\hline
+\rowcolor{grisclaro}\textbf{RF/RNF} & \textbf{Fuente} & \textbf{CU} & \textbf{Clase UML} &
+\textbf{Proceso/Estado} & \textbf{CP} & \textbf{Estado} \\
+\hline
+\endhead
+\id{RF-02} & \id{EV-01} & CU-02 & Plantación, Lote & Alta de lote & CP-02 & Completa \\ \hline
+\id{RF-26} & \id{EV-01} & CU-09 & Labor, Presupuesto & Planificación semanal & CP-09 & Completa \\
+\hline
+\id{RF-04} & \id{EV-05} & CU-14 & Labor & Registro de labor & CP-14 & Completa \\ \hline
+\id{RF-30} & \id{EV-06} & CU-17 & Incidencia & Reporte de campo & CP-17 & Completa \\ \hline
+\id{RF-13} & \id{EV-03} & CU-20 & Polinización & Registro georreferenciado & CP-20 & Completa \\
+\hline
+\id{RF-07} & \id{EV-01}, \id{EV-02} & CU-24 & DiagnósticoPlaga & En inferencia $\to$ explicado &
+CP-24 & Completa \\ \hline
+\id{RF-21} & \id{EV-04} & CU-26 & ClasificaciónMadurez & En inferencia $\to$ explicado & CP-26 &
+Completa \\ \hline
+\id{RF-23} & \id{EV-04} & CU-29 & TicketPesaje & Registro de calificación & CP-29 & Completa \\
+\hline
+\id{RF-32} & \id{EV-04} & CU-31 & Estimación & Compartición con extractora & CP-31 & Completa \\
+\hline
+\id{RF-19} & \id{EV-01} & CU-34 & Reporte & Generación de reporte & CP-34 & Completa \\ \hline
+\id{RNF-09} & \id{EV-06}\textsuperscript{*} & CU-14 & Labor & Registro de labor & CP-14b &
+Completa (corregida) \\ \hline
+\id{RNF-14} & --- & \multicolumn{1}{c|}{---} & Insumo & Registro de insumos\textsuperscript{*} &
+CP-15b & Completa (corregida) \\ \hline
+\id{RNF-16} & \id{EV-01}, \id{EV-02}, \id{EV-07} & CU-24, CU-26, CU-25 & Explicación & Explicado &
+CP-24b & Completa \\ \hline
+\id{RF-IA-04} & \id{EV-04}, \id{EV-08} & CU-26 & ClasificaciónMadurez, RegistroPredicción &
+En inferencia & CP-IA-04 & Completa \\ \hline
+\caption{Extracto ilustrativo de la matriz de trazabilidad final (14 de 69 filas). Las filas
+marcadas con \textsuperscript{*} corresponden a las dos cadenas corregidas durante la re-inspección
+de la Sección~6.4.}
+\label{tab:extracto-matriz}
+\end{longtable}}
+
+\subsection{Requisitos huérfanos y cadenas rotas}
+
+\begin{table}[!htbp]
+\centering
+\caption{Requisitos huérfanos y cadenas rotas detectados y su resolución}
+\label{tab:huerfanos}
+\begin{tabular}{|L{2.4cm}|L{5.2cm}|L{5.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Identificador} & \textbf{Causa} & \textbf{Acción tomada} \\ \hline
+\id{RNF-14} & Restricción operativa (climatización de insumos) sin interacción de usuario, por lo
+que no fue modelada como caso de uso en la Entrega~2. & Enlazado al proceso DFD ``Registro de
+insumos'' en lugar de a un caso de uso; se documenta como excepción justificada del patrón CU
+$\to$ requisito. \\ \hline
+\id{RNF-09} & Redactado en la Entrega~1 como restricción general de accesibilidad, sin evidencia
+de campo específica que lo originara. & Enlazado retroactivamente a \id{EV-06} (observación de
+campo sobre trabajadores con baja alfabetización digital), tras confirmar con el asesor técnico
+que esa evidencia sí lo sustentaba. \\ \hline
+\id{RF-33} (borrador Entrega~2) & Caso de uso ``Generar reporte histórico'' quedó fuera del modelo
+final de casos de uso por redundar con \id{RF-30}. & Eliminado del ERS v3.0 tras confirmarse la
+redundancia; el RFC correspondiente consta en el registro de cambios. \\ \hline
+\end{tabular}
+\end{table}
+
+Toda fila de la Tabla~\ref{tab:huerfanos} debe terminar en una de las tres acciones admitidas por
+la guía institucional; una traza marcada ``por si acaso'' se trata como error de trazabilidad y no
+como precaución.
+
+\subsection{Sincronización backlog--ERS}
+
+\begin{center}
+\fbox{\parbox{0.94\textwidth}{\small
+\textbf{Sincronización backlog $\leftrightarrow$ ERS:}
+36 de los 39 RF (92,3\,\%) cuentan con al menos una historia de usuario en el tablero de GitHub
+Projects; los 3 RF restantes corresponden a requisitos de exportación de datos hacia la extractora
+(\id{RF-28} a \id{RF-30}) cuya historia se agrupó en una sola tarjeta ``Exportación CSV/JSON'' por
+decisión de \emph{sprint planning}, y se desagregarán antes del cierre del MVP. El 100\,\% de las
+historias activas del tablero apuntan a un RF existente en el ERS v3.0; ninguna historia quedó sin
+requisito de respaldo.}}
+\end{center}
+
+\subsection{Evidencia de gestión}
+
+La gestión del proyecto integrador se documenta con la lógica de dominios de desempeño de
+PMBOK~7.\textsuperscript{a}~ed.~\cite{pmbok7}: alcance acordado en el acta de la Entrega~1,
+entregables con responsable único por unidad, incidencias registradas en el tablero y lecciones
+aprendidas incorporadas en la retrospectiva (Sección~9). La evidencia verificable de esta gestión
+es el historial de \emph{commits} del repositorio, no una narración; el Anexo~C traza esa evidencia
+por integrante.
+
+\subsection{Evidencia Git y gestión de la configuración}
+
+Conforme a las prácticas de gestión de la configuración de SWEBOK~v4.0~\cite{swebok4}, el equipo
+adoptó tres convenciones verificables en el propio historial del repositorio. Primera, la rama
+\texttt{main} solo recibe cambios sobre el ERS mediante \emph{commits} que referencian el
+identificador del requisito afectado en el mensaje de \emph{commit} (por ejemplo,
+\texttt{fix(RNF-14): enlazar a proceso DFD de registro de insumos}), lo que permite reconstruir la
+historia de cada requisito sin depender de la memoria del equipo. Segunda, toda evidencia de campo
+con datos personales se almacena mediante Git~LFS en la zona restringida y cifrada de
+\id{AHMRV/02\_Evidencias/}, separada de la zona pública que contiene evidencia ya anonimizada; esta
+separación es la que permite mantener el repositorio público sin incumplir \id{RD-04} ni la
+LOPDP~\cite{lopdp2021}. Tercera, la línea base final se etiqueta explícitamente
+(\texttt{v3.0-final}), de modo que un cambio posterior a la etiqueta que afecte a un requisito ya
+congelado se distingue sin ambigüedad de un cambio anterior a ella, condición necesaria para que la
+comparación antes/después de la Tabla~\ref{tab:antes-despues} tenga sentido.
+
+La distribución de \emph{commits} entre los seis integrantes no es uniforme por diseño de roles: el
+Analista líder y el Apoyo repositorio concentran mayor actividad sobre \id{01\_ERS} y
+\id{02\_Evidencias} respectivamente, mientras que el Modelador concentra su actividad en
+\id{03\_Modelado}. El Anexo~C documenta esta distribución por integrante junto con la evidencia
+verificable en el repositorio, y es la base sobre la que el FAI (Sección~6 de la Rúbrica PE5) se
+calcula --- no una declaración de equipo sin respaldo, sino un historial consultable por el
+docente.
 
 % =====================================================================
 %  REFERENCIAS
@@ -801,7 +1151,5 @@ del repositorio (\texttt{pdflatex} $\to$ \texttt{bibtex} $\to$ \texttt{pdflatex}
 \bibliographystyle{IEEEtran}
 \bibliography{referencias}
 
-% =====================================================================
-%  ANEXOS
-% 
+
 \end{document}
