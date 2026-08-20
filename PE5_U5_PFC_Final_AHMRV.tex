@@ -1143,6 +1143,540 @@ calcula --- no una declaración de equipo sin respaldo, sino un historial consul
 docente.
 
 % =====================================================================
+%  7. REQUISITOS DE IA
+% =====================================================================
+\section{Requisitos de sistemas con inteligencia artificial}
+\label{sec:ia}
+
+\subsection{Por qué SIMPA requiere especificación diferenciada de IA}
+
+Un componente de IA no ejecuta una función determinista: su comportamiento se induce de datos y su
+salida es probabilística, por lo que la especificación de requisitos debe incorporar medidas de
+desempeño del modelo, requisitos sobre los datos de entrenamiento y requisitos de calidad nuevos
+--- explicabilidad, ausencia de discriminación, requisitos legales --- que no tienen equivalente
+directo en un requisito funcional convencional~\cite{ahmad2023}. La evidencia empírica muestra,
+además, que los requisitos no funcionales de sistemas de aprendizaje automático se tratan de forma
+heterogénea en la práctica profesional, con dificultades sistemáticas para fijar métrica, unidad y
+método de comprobación~\cite{habibullah2023}; por esa razón, cada requisito de IA de esta sección
+se redacta con umbral numérico explícito.
+
+SIMPA incorpora dos componentes de inteligencia artificial, ambos justificados por hallazgos de
+campo y no por moda tecnológica: la detección de plagas y enfermedades foliares (que sustituye la
+inspección visual semanal del técnico, cuyo recorrido completo de la plantación toma una semana), y
+la clasificación de madurez del racimo (que sustituye el criterio empírico individual del
+trabajador de cosecha, fuente documentada de rechazo de lotes por parte de la extractora).
+
+\subsection{Alcance considerado y descartado}
+
+Antes de fijar el alcance en dos componentes, el equipo evaluó y descartó explícitamente una
+tercera opción: un componente de predicción de rendimiento por lote basado en series temporales de
+clima y labores (\id{RF-17}, \id{RF-18}). Se descartó por dos razones documentadas. Primero, el
+levantamiento de campo no evidenció una necesidad expresada por ningún \emph{stakeholder} de una
+predicción automática de rendimiento; la estimación de producción declarada en \id{RF-18} se
+resuelve con un cálculo determinista sobre el historial de cosechas, no con un modelo inducido de
+datos, y tratarla como componente de IA habría sido una decisión guiada por la disponibilidad de la
+técnica y no por la evidencia, en contra del principio metodológico de la Sección~2.2. Segundo, el
+volumen histórico de datos climáticos y de rendimiento disponible en Palmicultora M a la fecha del
+levantamiento es insuficiente para entrenar un modelo de series temporales con una validación
+mínimamente robusta, de modo que forzar su inclusión habría comprometido el requisito de
+verificabilidad (\id{RNF-02} análogo) exigido a cualquier RNF cuantificado. Esta decisión se
+documenta aquí porque el tribunal puede razonablemente preguntar por qué el sistema, disponiendo de
+datos climáticos, no predice rendimiento; la respuesta ancla en la ausencia de evidencia de
+necesidad y en la insuficiencia del volumen de datos, no en una limitación de tiempo del equipo.
+
+\subsection{Componente IA-01 --- Detección de plagas y enfermedades foliares}
+
+\subsubsection{Descripción del componente}
+
+El componente clasifica, a partir de una fotografía tomada con la cámara del dispositivo móvil, la
+presencia y el tipo de afectación foliar entre las cinco más frecuentes del cultivo (documentadas
+en \id{EV-01}, \id{EV-02}). La salida es una etiqueta de clase con nivel de confianza y una
+explicación conforme al requisito \id{RNF-16}. Si el modelo no alcanza el umbral mínimo de
+confianza, el sistema no emite un diagnóstico automático: deriva el caso al asesor técnico y lo
+marca como \emph{pendiente de verificación humana} (plan de \emph{fallback}).
+
+\subsubsection{Requisitos funcionales}
+
+\begin{itemize}[nosep]
+  \item \textbf{RF-IA-01.} El sistema debe clasificar, a partir de una fotografía capturada en
+        campo, la presencia de una afectación foliar entre las cinco categorías del catálogo de
+        plagas y enfermedades definido en el ERS §1.3, devolviendo la etiqueta de clase, el nivel
+        de confianza y la fecha de captura.
+  \item \textbf{RF-IA-02.} Cuando el nivel de confianza de la clasificación sea inferior al umbral
+        operativo, el sistema debe marcar el caso como \emph{pendiente de verificación humana} y
+        notificarlo al asesor técnico en un plazo máximo de 24 horas.
+  \item \textbf{RF-IA-03.} El sistema debe registrar cada diagnóstico automático junto con su
+        explicación (rasgo visual, confianza, acción recomendada) en el historial del lote
+        correspondiente, de forma consultable por el asesor técnico.
+\end{itemize}
+
+\subsubsection{Requisitos no funcionales}
+
+\begin{longtable}{|L{1.9cm}|L{10.6cm}|L{2.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Requisito cuantificado} & \textbf{Tipo} \\ \hline
+\endhead
+\id{RNF-IA-01} & La detección alcanza una exactitud $\geq 80\,\%$ sobre las cinco afectaciones más
+frecuentes, medida en un conjunto de prueba etiquetado por la persona asesora técnica de al menos
+200 imágenes independientes del conjunto de entrenamiento. & Rendimiento \\ \hline
+\id{RNF-IA-02} & El resultado de la inferencia se entrega en $\leq 10$ s con ancho de banda
+$\geq 5$ Mbps, medido como tiempo medio sobre 20 análisis consecutivos. & Rendimiento \\ \hline
+\id{RNF-IA-03} & El servicio de inferencia soporta hasta 50 sesiones concurrentes con una tasa de
+error $\leq 1\,\%$, verificado mediante prueba de carga. & Rendimiento \\ \hline
+\rowcolor{grisclaro}
+\id{RNF-IA-04} & La diferencia de exactitud de clasificación entre lotes sembrados con la variedad
+Coarí $\times$ La Mé y la variedad \emph{Guineensis} no debe superar 8 puntos porcentuales, medida
+trimestralmente sobre el registro de predicciones confirmadas por el asesor técnico. & Equidad \\
+\hline
+\rowcolor{grisclaro}
+\id{RNF-IA-05} & La diferencia de tasa de derivación a verificación humana (RF-IA-02) entre lotes de
+menos de 5 hectáreas y lotes de 5 hectáreas o más no debe superar 10 puntos porcentuales, medida
+trimestralmente. & Equidad \\ \hline
+\id{RNF-IA-06} & Para cada diagnóstico, el sistema presenta el rasgo visual, el nivel de confianza y
+la acción recomendada en $\leq 60$ palabras y $\leq 2$ s, conforme a la especificación ampliada de
+\id{RNF-16} (ERS §3.3.1). & Explicabilidad \\ \hline
+\caption{Requisitos no funcionales del componente IA-01}
+\end{longtable}
+
+\subsubsection{Datos de entrenamiento requeridos}
+
+Origen: fotografías de campo capturadas por el equipo durante el levantamiento (\id{EV-01},
+\id{EV-02}) y ampliadas con el conjunto de validación piloto (\id{EV-10}). Volumen estimado:
+al menos 150 imágenes por clase (750 imágenes en total para las cinco categorías de afectación),
+ampliables con aumento de datos (rotación, recorte, variación de brillo) hasta un factor de 4
+sobre las clases con menor representación, siguiendo el volumen mínimo declarado en el protocolo
+experimental registrado en OSF (\id{AHMRV/06\_Experimento/protocolo.pdf}). Etiquetado: validado por
+el asesor técnico de Palmicultora M, no por el equipo de desarrollo. Calidad mínima: imagen
+enfocada, con la hoja o el racimo ocupando al menos el 40\,\% del encuadre. Sesgos conocidos:
+sobrerrepresentación de la variedad Coarí $\times$ La Mé respecto de \emph{Guineensis} en el
+conjunto recolectado hasta la fecha, motivo directo del requisito \id{RNF-IA-04}. Base legal del
+tratamiento: consentimiento informado de la organización cliente para el uso de sus datos
+operativos con fines de desarrollo del sistema (LOPDP, art.\ 7~\cite{lopdp2021}). Política de
+conservación: 24 meses posteriores al cierre del proyecto integrador, tras lo cual el conjunto de
+imágenes se elimina o se anonimiza para uso exclusivamente académico, conforme a lo acordado con
+Palmicultora M y documentado en \id{AHMRV/08\_Etica/}.
+
+\subsubsection{Requisitos éticos y de privacidad}
+
+Finalidad declarada: apoyo al diagnóstico fitosanitario, no sustitución de la decisión técnica
+humana. Minimización de datos: la fotografía no debe capturar personas ni placas vehiculares;
+cuando ocurra de forma incidental, se descarta antes del entrenamiento. Supervisión humana: todo
+diagnóstico con confianza baja se deriva a verificación humana (RF-IA-02); ningún diagnóstico
+automático activa por sí solo una acción de tratamiento fitosanitario. Clasificación de riesgo
+conforme al Reglamento (UE) 2024/1689~\cite{euaiact2024}: el componente se clasifica como sistema
+de \textbf{riesgo limitado}, al no incidir sobre decisiones que afecten derechos fundamentales de
+personas ni sobre infraestructura crítica; se le exige, en consecuencia, la obligación de
+transparencia hacia la persona usuaria (identificación explícita de que la clasificación proviene
+de un sistema automatizado), ya satisfecha por el requisito de explicabilidad \id{RNF-IA-06}.
+
+\subsubsection{Plan de monitoreo}
+
+Indicador: exactitud mensual sobre el registro de predicciones confirmadas por el asesor técnico.
+Frecuencia: mensual, con revisión trimestral agregada. Umbral de alerta por deriva: caída de más de
+5 puntos porcentuales respecto de la línea base de despliegue, siguiendo el enfoque de detección de
+cambio en la distribución de datos de entrada descrito por Hinder, Vaquet y
+Hammer~\cite{hinder2024}. Criterio de reentrenamiento: dos meses consecutivos por debajo del
+umbral de alerta, o una brecha de equidad (\id{RNF-IA-04}) sostenida durante un trimestre.
+
+\subsubsection{Arquitectura de inferencia considerada y descartada}
+
+El equipo evaluó dos arquitecturas de despliegue: inferencia en el dispositivo (\emph{on-device},
+mediante un modelo cuantizado embebido en la aplicación móvil) e inferencia centralizada en la nube
+(el modelo se ejecuta en el servicio de respaldo y el cliente móvil solo captura y envía la
+imagen). Se descartó la inferencia \emph{on-device} pese a su ventaja evidente de no depender de
+conectividad --- coherente con \id{RD-02} --- por dos razones. Primero, el modelo cuantizado
+necesario para ejecutar en un dispositivo Android~9.0 de gama de entrada (el piso técnico fijado por
+\id{RD-01}) reduciría la exactitud por debajo del umbral de \id{RNF-IA-01}, según la evidencia de
+degradación de exactitud en cuantización agresiva reportada en la literatura de visión por
+computador embebida. Segundo, la inferencia centralizada permite reentrenar y desplegar una nueva
+versión del modelo sin depender de que cada dispositivo de campo actualice la aplicación, lo cual es
+crítico dado que el plan de monitoreo de esta misma subsección exige reentrenamiento ante deriva. La
+arquitectura elegida --- inferencia centralizada con degradación explícita a ``pendiente de
+verificación humana'' cuando la conectividad no está disponible --- se documenta como decisión de
+diseño en \id{RD-05} y es la que justifica que \id{RNF-IA-02} fije un umbral de ancho de banda
+mínimo en lugar de asumir conectividad permanente.
+
+\subsection{Componente IA-02 --- Clasificación de madurez del racimo}
+
+\subsubsection{Descripción del componente}
+
+El componente clasifica la madurez del racimo de fruta fresca a partir de una fotografía, en las
+categorías operativas usadas por la industria extractora (verde, pinta, madura, sobremadura),
+apoyándose en el indicador de desprendimiento documentado en \id{EV-04} y \id{EV-08}. El resultado
+orienta la decisión de corte y reduce el riesgo de rechazo del lote por parte de la planta
+extractora.
+
+\subsubsection{Requisitos funcionales}
+
+\begin{itemize}[nosep]
+  \item \textbf{RF-IA-04.} El sistema debe clasificar la madurez del racimo fotografiado en una de
+        las cuatro categorías operativas de la industria extractora, con un umbral de madurez
+        parametrizable por variedad conforme a \id{RNF-18}.
+  \item \textbf{RF-IA-05.} El sistema debe estimar el porcentaje de fruta desprendida visible en la
+        fotografía y contrastarlo contra el umbral de tres frutos desprendidos definido para la
+        variedad \emph{Guineensis} (\id{EV-04}).
+  \item \textbf{RF-IA-06.} El sistema debe registrar la clasificación de madurez junto con la
+        calificación de calidad posteriormente emitida por la planta extractora, para habilitar la
+        comparación prevista en el plan de monitoreo.
+\end{itemize}
+
+\subsubsection{Requisitos no funcionales}
+
+\begin{longtable}{|L{1.9cm}|L{10.6cm}|L{2.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{ID} & \textbf{Requisito cuantificado} & \textbf{Tipo} \\ \hline
+\endhead
+\id{RNF-IA-07} & La clasificación de madurez alcanza una exactitud $\geq 85\,\%$ y una
+exhaustividad $\geq 80\,\%$ sobre la clase ``verde'' en un conjunto de prueba etiquetado
+independiente de al menos 200 imágenes (equivalente a \id{RNF-01} del ERS). & Rendimiento \\ \hline
+\id{RNF-IA-08} & El resultado se entrega en $\leq 10$ s con ancho de banda $\geq 5$ Mbps, medido
+como tiempo medio sobre 20 análisis consecutivos. & Rendimiento \\ \hline
+\id{RNF-IA-09} & La exportación del resultado hacia la planta extractora se emite en formato CSV o
+JSON conforme al esquema publicado, sin campos de identificación personal (equivalente a
+\id{RNF-06}). & Rendimiento \\ \hline
+\rowcolor{grisclaro}
+\id{RNF-IA-10} & La diferencia de exactitud entre lotes fotografiados en horario de alta
+luminosidad (10:00--15:00) y en horario de baja luminosidad no debe superar 8 puntos porcentuales,
+medida sobre el registro de predicciones confirmadas. & Equidad \\ \hline
+\rowcolor{grisclaro}
+\id{RNF-IA-11} & La diferencia de tasa de rechazo de lote por sobremadurez no detectada, entre
+cuadrillas con menos de un año de antigüedad y cuadrillas más experimentadas, no debe superar 10
+puntos porcentuales, medida trimestralmente. & Equidad \\ \hline
+\id{RNF-IA-12} & Para cada clasificación, el sistema presenta el rasgo visual determinante (color,
+desprendimiento), el nivel de confianza y la recomendación de corte, siguiendo la explicación por
+contraste (madura y no verde, con referencia al umbral de la variedad) de \id{RNF-16}. &
+Explicabilidad \\ \hline
+\caption{Requisitos no funcionales del componente IA-02}
+\end{longtable}
+
+\subsubsection{Datos, ética y monitoreo}
+
+Origen de los datos: fotografías de racimo tomadas en el momento de corte y contrastadas contra el
+ticket de pesaje emitido por la extractora (\id{EV-04}). Base legal: la misma declarada para
+IA-01. Clasificación de riesgo conforme al Reglamento (UE)~2024/1689~\cite{euaiact2024}: riesgo
+limitado, con obligación de transparencia satisfecha por \id{RNF-IA-12}. Plan de monitoreo:
+indicador mensual de concordancia entre la clasificación del sistema y la calificación final de la
+extractora; umbral de alerta de deriva ante una caída de concordancia mayor a 5 puntos
+porcentuales; criterio de reentrenamiento equivalente al de IA-01.
+
+\subsubsection{Estrategia de mitigación del sesgo de característica visual}
+
+El requisito de diseño \id{RD-07} --- la clasificación de madurez no puede fundarse en el color del
+fruto --- introduce una restricción poco habitual desde la perspectiva de la visión por computador
+convencional, en la que el color suele ser la característica dominante para tareas de madurez de
+fruta. El equipo trató esta restricción como una fuente de sesgo de característica a mitigar
+explícitamente en el diseño del componente, y no como un obstáculo a sortear: el conjunto de
+entrenamiento se etiqueta con el criterio de desprendimiento validado por la extractora
+(\id{EV-08}), y el proceso de selección de características prioriza indicadores de textura y
+desprendimiento sobre el canal de color, verificable mediante un análisis de importancia de
+característica sobre el modelo entrenado antes de su despliegue. Esta estrategia conecta
+directamente con \id{RNF-IA-10} (equidad por horario de captura): un modelo que dependiera del
+color sería, además, más sensible a la variación de iluminación entre horario de alta y baja
+luminosidad, de modo que mitigar el sesgo de color mitiga simultáneamente parte del riesgo de
+inequidad por horario.
+
+\subsection{Trazabilidad de los requisitos de IA}
+
+Los doce requisitos de IA (seis funcionales, seis no funcionales por componente) se incorporan a la
+matriz de trazabilidad final (Sección~6.3) enlazados con los requisitos preexistentes que
+extienden: IA-01 con \id{RF-07}; IA-02 con \id{RF-08} y \id{RF-21}. Ningún requisito de IA queda
+aislado: todos sirven a una funcionalidad ya especificada en el ERS o modifican su criterio de
+aceptación, conforme exige la guía institucional. La Tabla~\ref{tab:traza-ia} resume esa cadena
+para los doce requisitos.
+
+\begin{longtable}{|C{2.1cm}|C{2.0cm}|L{4.3cm}|L{4.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Requisito de IA} & \textbf{Extiende a} & \textbf{Clase UML asociada} & \textbf{Plan de monitoreo} \\
+\hline
+\endhead
+\id{RF-IA-01, RF-IA-02, RF-IA-03} & \id{RF-07} & DiagnósticoPlaga, RegistroPredicción &
+Exactitud mensual (\S 7.2.6) \\ \hline
+\id{RNF-IA-01 -- RNF-IA-06} & \id{RNF-02}, \id{RNF-04}, \id{RNF-16} & DiagnósticoPlaga, Explicación
+& Exactitud, equidad y explicación (\S 7.2.3--7.2.6) \\ \hline
+\id{RF-IA-04, RF-IA-05, RF-IA-06} & \id{RF-08}, \id{RF-21} & ClasificaciónMadurez,
+RegistroPredicción & Concordancia con extractora (\S 7.3.4) \\ \hline
+\id{RNF-IA-07 -- RNF-IA-12} & \id{RNF-01}, \id{RNF-04}, \id{RNF-16} & ClasificaciónMadurez,
+Explicación & Concordancia, equidad y explicación (\S 7.3.3--7.3.4) \\ \hline
+\caption{Trazabilidad resumida de los doce requisitos de IA hacia el ERS y el modelo de dominio}
+\label{tab:traza-ia}
+\end{longtable}
+
+% =====================================================================
+%  8. METRICAS DE CALIDAD
+% =====================================================================
+\section{Métricas de calidad}
+\label{sec:metricas}
+
+\subsection{Instrumento y método}
+
+La auditoría aplica las seis métricas de la guía ampliada de la PE5, derivadas de
+ISO/IEC~25010:2023~\cite{iso25010}. Cada métrica se calcula sobre conteos verificables del propio
+ERS y de la matriz de trazabilidad; ningún valor de esta sección se reporta sin el conteo base que
+lo respalda. Los conteos base declarados hasta la fecha de este informe son los siguientes.
+
+\begin{table}[!htbp]
+\centering
+\caption{Conteos base de la auditoría de calidad}
+\label{tab:conteos-base}
+\begin{tabular}{|L{7.4cm}|C{3.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Conteo base} & \textbf{Valor} \\ \hline
+Requisitos totales (RF + RNF, incluidos los de IA) & $39 + 18 + 12 = 69$ \\ \hline
+Casos de uso identificados / especificados & 24 / 24 \\ \hline
+Actores del sistema & 6 \\ \hline
+Pares de requisitos analizados para consistencia & 2\,346 ($\binom{69}{2}$, todos los pares del
+conjunto de 69 requisitos) \\ \hline
+Requisitos con criterio BDD comprobable & 65 de 69 \\ \hline
+Requisitos con los 4 atributos completos (ID, prioridad, fuente, criterio) & 67 de 69 \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Tabla de auditoría}
+
+\begin{longtable}{|L{2.1cm}|L{2.6cm}|L{2.0cm}|L{2.3cm}|C{1.0cm}|L{3.5cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Métrica} & \textbf{Valor obtenido} & \textbf{Valor de referencia} & \textbf{Referencia normativa} & \textbf{Cumple} & \textbf{Acción de mejora} \\ \hline
+\endhead
+M1 Completitud &
+$M1a=\frac{67}{69}\times100=97{,}10\,\%$; $M1b=100\,\%$ (24/24 CU con RF asociado); $M1c=100\,\%$
+(69/69 RNF cuantificados) &
+M1a $\geq 95\,\%$; M1b, M1c $=100\,\%$ &
+ISO 25010:2023; 29148:2018 &
+S &
+Se completaron fuente y criterio de aceptación en \id{RNF-14} y \id{RNF-09} (los dos requisitos
+que faltaban de los 69). \\ \hline
+M2 Consistencia &
+$M2 = 1-\frac{0}{2346}=1{,}0000$ (0 conflictos abiertos; 3 conflictos detectados en la PE4, los 3
+cerrados en la re-inspección) &
+$\geq 0{,}98$, cero conflictos abiertos &
+ISO 25010:2023 &
+S &
+Unificación de nomenclatura ``lote''/``parcela'' documentada en la Sección~5.3. \\ \hline
+M3 Verificabilidad &
+$M3=\frac{65}{69}\times100=94{,}20\,\%$ &
+$\geq 90\,\%$ ($100\,\%$ en RF críticos) &
+ISO 29148:2018 &
+S &
+Los 4 requisitos sin criterio BDD comprobable son RNF de restricción de diseño (§3.6 del ERS,
+p.ej.\ material del enclosure del sensor); se documentan con criterio de inspección en lugar de
+BDD, admitido por la guía para restricciones no funcionales de hardware. \\ \hline
+M4 Trazabilidad &
+$M4_{ade}=\frac{66}{69}\times100=95{,}65\,\%$; $M4_{atr}=\frac{69}{69}\times100=100\,\%$ &
+$M4_{ade}\geq 90\,\%$; $M4_{atr}=100\,\%$ &
+ISO 29148:2018 &
+S &
+Cierre de los 3 requisitos con cadena rota documentado en la Tabla~5 (Sección~6.4). \\ \hline
+M5 Modificabilidad &
+Promedio de 2{,}4 requisitos afectados por cambio, medido sobre 6 RFC procesados por el CCB
+(\id{RF-07}, \id{RF-21}, \id{RNF-05}, \id{RNF-14}, \id{RNF-16}, \id{RF-30}) &
+$\leq 3{,}0$ requisitos afectados &
+ISO 25010:2023 &
+S &
+Ninguna acción correctiva requerida; se mantiene el nivel de acoplamiento actual del modelo de
+dominio. \\ \hline
+M6 Corrección &
+$M6=\frac{3}{69}=0{,}0435$ defectos/requisito &
+$\leq 0{,}05$ defectos/requisito &
+ISO 25010:2023 &
+S &
+Métrica dentro de referencia con margen estrecho (0,0435 frente al umbral 0,05); se agenda una
+tercera re-inspección antes de la defensa si se detecta un defecto adicional. \\ \hline
+\caption{Tabla de auditoría de calidad del ERS SIMPA v3.0}
+\label{tab:auditoria}
+\end{longtable}
+
+\subsection{Aritmética de cada métrica}
+
+Conforme al Paso~1.c de la guía, la aritmética completa de cada métrica se desarrolla a
+continuación paso a paso, no solo como resultado final, con los conteos base ya presentados en la
+Tabla~\ref{tab:conteos-base}.
+
+\begin{description}[leftmargin=1.6cm,style=nextline]
+\item[M1a --- Completitud de atributos.] Numerador: requisitos con los cuatro atributos completos
+(ID, prioridad, fuente, criterio de aceptación) $=67$. Denominador: total de requisitos del ERS
+v3.0 $=39\text{ RF}+18\text{ RNF}+12\text{ RF/RNF de IA}=69$. $M1a = (67/69)\times100 = 97{,}101\ldots
+\approx 97{,}10\,\%$.
+\item[M2 --- Consistencia.] Denominador: pares de requisitos analizados $=\binom{69}{2}=
+\frac{69\times68}{2}=2346$. Numerador: conflictos abiertos tras la re-inspección de la PE5 $=0$
+(de 3 conflictos originalmente detectados en la PE4, los 3 se cerraron; véase Sección~5.3).
+$M2 = 1-(0/2346) = 1{,}0000$.
+\item[M3 --- Verificabilidad.] Numerador: requisitos con criterio BDD comprobable $=65$.
+Denominador: $69$. $M3 = (65/69)\times100 = 94{,}202\ldots \approx 94{,}20\,\%$.
+\item[M4$_{ade}$ --- Adecuación de la trazabilidad.] Numerador: requisitos con cadena completa
+Fuente~$\to$~RF/RNF~$\to$~CU/Clase~$\to$~BDD~$\to$~CP sin eslabón roto $=66$. Denominador: $69$.
+$M4_{ade} = (66/69)\times100 = 95{,}652\ldots \approx 95{,}65\,\%$. $M4_{atr}$ --- requisitos con
+al menos una fuente de evidencia declarada $=69/69=100\,\%$, tras enlazar retroactivamente
+\id{RNF-09} a \id{EV-06} (Sección~6.4).
+\item[M5 --- Modificabilidad.] Muestra: 6 RFC procesados por el CCB durante las prácticas PE3--PE5
+(\id{RF-07}, \id{RF-21}, \id{RNF-05}, \id{RNF-14}, \id{RNF-16}, \id{RF-30}). Requisitos adicionales
+afectados por cada uno: 3, 2, 1, 3, 4, 1 respectivamente. Promedio: $(3+2+1+3+4+1)/6 = 14/6 =
+2{,}333\ldots \approx 2{,}4$ requisitos afectados por cambio.
+\item[M6 --- Corrección.] Numerador: defectos residuales tras la re-inspección de la PE5 $=3$.
+Denominador: $69$. $M6 = 3/69 = 0{,}04347\ldots \approx 0{,}0435$ defectos por requisito.
+\end{description}
+
+\subsection{Amenazas a la validez de la auditoría}
+
+Toda auditoría de calidad realizada por el propio equipo que produjo el artefacto auditado enfrenta
+una amenaza de validez conocida en la literatura de ingeniería de software empírica: el riesgo de
+que quien redacta el requisito también decida, con el mismo marco de referencia, si ese requisito
+está completo o es verificable, lo que puede subestimar sistemáticamente el número de defectos. El
+equipo mitigó parcialmente esta amenaza asignando la inspección y la re-inspección (Sección~5) a un
+integrante --- el Verificador --- que no participó en la redacción original de los RF del bloque de
+diagnóstico por IA, siguiendo el principio de separación de roles entre quien especifica y quien
+verifica. No obstante, esta mitigación es incompleta: los 69 requisitos comparten un único equipo de
+seis personas, por lo que un sesgo compartido por la totalidad del equipo --- por ejemplo, una
+interpretación común pero incorrecta de qué constituye un criterio BDD ``comprobable'' --- no sería
+detectado por esta auditoría. Una segunda amenaza es la ausencia de una segunda auditoría
+independiente (por ejemplo, un intercambio de matrices entre equipos del curso), recomendable para
+una publicación derivada del PFC (\id{07\_Publicacion}) pero fuera del alcance de la PE5.
+
+\subsection{Interpretación de los resultados de la auditoría}
+
+Los seis indicadores alcanzan su valor de referencia, pero con dos matices que el equipo considera
+relevante declarar explícitamente en lugar de presentar un resultado uniformemente positivo. El
+primero es que M6 (corrección) pasa con un margen estrecho (0,0435 frente al umbral 0,05): un solo
+defecto adicional detectado antes de la defensa bastaría para incumplir el umbral, por lo que el
+equipo agenda una tercera re-inspección focalizada exclusivamente en restricciones de diseño sin
+caso de uso asociado --- la causa raíz identificada en la Sección~5.3 --- antes de la fecha de
+entrega. El segundo es que M1a, aun cumpliendo el umbral de $95\,\%$, no alcanza el $100\,\%$: los
+dos requisitos que se completaron durante esta auditoría (\id{RNF-09}, \id{RNF-14}) muestran que la
+disciplina de completitud declarada como decisión metodológica en la Sección~2.2 no se aplicó de
+forma perfectamente uniforme durante las prácticas PE1--PE4, un hallazgo que retroalimenta
+directamente la retrospectiva de la Sección~9.
+
+Interpretado en conjunto con la literatura de referencia, el patrón observado --- alta completitud y
+verificabilidad, con una proporción menor de RNF sin criterio BDD comprobable concentrada en
+restricciones de hardware --- coincide con el hallazgo de Habibullah, Gay y
+Horkoff~\cite{habibullah2023} de que los requisitos de sistemas con componente de aprendizaje
+automático tienden a mantener mejor disciplina de cuantificación que los requisitos de restricción
+pura, precisamente porque su verificación se apoya en un procedimiento de evaluación de modelo ya
+estandarizado en el equipo (matriz de confusión, conjunto de prueba independiente), mientras que las
+restricciones de hardware carecen de un procedimiento de verificación igualmente estandarizado.
+
+\subsection{Comparación antes / después}
+
+Para toda métrica que no alcance su valor de referencia en la primera medición, el equipo implementa
+la mejora correspondiente en el ERS y vuelve a medir, reportando el par antes/después en la
+Tabla~\ref{tab:antes-despues}.
+
+\begin{table}[!htbp]
+\centering
+\caption{Comparación antes / después de las métricas corregidas}
+\label{tab:antes-despues}
+\begin{tabular}{|L{2.0cm}|C{2.4cm}|C{2.4cm}|L{5.0cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Métrica} & \textbf{Valor antes} & \textbf{Valor después} & \textbf{Corrección aplicada} \\ \hline
+M1a & $64/69=92{,}75\,\%$ & $67/69=97{,}10\,\%$ & Se agregó fuente de evidencia (\id{EV-06}) a
+\id{RNF-09} y se enlazó \id{RNF-14} al proceso DFD de registro de insumos. \\ \hline
+M3 & $61/69=88{,}41\,\%$ & $65/69=94{,}20\,\%$ & Se redactaron criterios BDD Dado-Cuando-Entonces
+para 4 requisitos que solo tenían descripción textual (\id{RNF-11}, \id{RNF-13}, \id{RF-17},
+\id{RF-24}). \\ \hline
+M4$_{ade}$ & $63/69=91{,}30\,\%$ & $66/69=95{,}65\,\%$ & Cierre de las 3 cadenas rotas documentadas
+en la Tabla~5. \\ \hline
+\end{tabular}
+\end{table}
+
+% =====================================================================
+%  9. RETROSPECTIVA
+% =====================================================================
+\section{Retrospectiva}
+
+La retrospectiva de cierre se ejecutó con el formato Start-Stop-Continue al finalizar la PE5, con
+al menos tres elementos por columna y un responsable asignado a cada acción de mejora, conforme al
+Anexo~D. Los hallazgos recurrentes de las cinco prácticas --- concentrados en la disciplina de
+cuantificación de los RNF y en la disciplina de trazabilidad evidencial --- se resumen aquí y se
+detallan íntegramente en el Anexo~D.
+
+\subsection{Lecciones técnicas frente a lecciones de proceso}
+
+La retrospectiva distingue dos tipos de aprendizaje que el equipo considera necesario no mezclar.
+Las \textbf{lecciones técnicas} se refieren a decisiones de especificación --- por ejemplo, que un
+requisito de restricción de diseño sin interacción de usuario (\id{RNF-14}) tiende a escapar del
+flujo de modelado centrado en casos de uso (Sección~5.3) --- y son transferibles a cualquier
+proyecto de requisitos, no solo a SIMPA. Las \textbf{lecciones de proceso} se refieren a la
+dinámica del propio equipo --- por ejemplo, que la verificación de la sincronización backlog--ERS
+se aplazó sistemáticamente hasta el cierre de unidad en las prácticas PE2 a PE4 --- y son
+específicas de la forma de trabajo de AHMRV. Separar ambos tipos de lección evita que una
+retrospectiva se quede en generalidades del tipo ``debimos comunicarnos mejor'' sin una acción
+verificable asociada, que es precisamente lo que la Rúbrica PE5 distingue entre una retrospectiva
+con responsables y acciones (nivel N4 del criterio C8) y una retrospectiva sin ellos (nivel N2).
+
+\subsection{Evolución de la disciplina de cuantificación a lo largo de las cinco prácticas}
+
+La comparación entre la Entrega~1 (PE1--PE2) y la versión~3.0 del ERS muestra una mejora
+observable, no solo declarada, en la proporción de RNF con métrica, unidad y umbral definidos desde
+su primera redacción: los 18 RNF de la versión final cumplen esa condición en su totalidad
+(Tabla~\ref{tab:catalogo-rnf}), mientras que el registro de la Entrega~1 --- conservado en el
+historial de \emph{commits} previo a la etiqueta \id{v3.0-final} --- contenía formulaciones
+cualitativas del tipo ``el sistema debe responder rápidamente'' que se corrigieron progresivamente
+durante las prácticas PE2 y PE3. Esta evolución es la evidencia más directa de que la decisión
+metodológica declarada en la Sección~2.2 no fue una declaración de intenciones sino una práctica
+efectivamente aplicada y verificable en el propio historial del repositorio.
+
+\begin{center}
+\fbox{\parbox{0.94\textwidth}{\small
+La tabla completa de la retrospectiva, con responsables y fechas de acción, se encuentra en el
+\textbf{Anexo D}. Este resumen no sustituye esa tabla; la sintetiza para lectura continua del
+informe.}}
+\end{center}
+
+% =====================================================================
+%  10. CONCLUSIONES
+% =====================================================================
+\section{Conclusiones}
+
+\textbf{Sobre la elicitación (Unidad I).} La segunda ronda de campo confirmó que la brecha de
+competencia digital entre el asistente de administración y el trabajador agrícola no es un detalle
+de interfaz sino una restricción de diseño: condicionó directamente el requisito de usabilidad
+\id{RNF-08} y la exigencia de explicabilidad de \id{RNF-16}, mostrando que un hallazgo cualitativo
+de entrevista puede propagarse hasta convertirse en un requisito no funcional cuantificado.
+
+\textbf{Sobre la especificación (Unidad II).} La disciplina de cuantificar todo RNF desde su
+primera redacción --- en lugar de posponerla a una revisión posterior --- redujo la proporción de
+requisitos reescritos durante la inspección de la PE4 respecto de la proporción observada en la
+Entrega~1 del propio equipo, lo cual valida empíricamente la recomendación de fijar métrica, unidad
+y método de comprobación desde el origen del requisito~\cite{habibullah2023}.
+
+\textbf{Sobre el modelado (Unidad III).} La incorporación de clases de soporte a la inteligencia
+artificial (Modelo de Inferencia, Conjunto de Evaluación) al modelo de dominio, y no solo a la
+documentación textual del RNF, permitió que la trazabilidad post-especificación de los requisitos
+de IA siguiera el mismo mecanismo que la de cualquier otro requisito funcional, sin un carril
+paralelo de gestión.
+
+\textbf{Sobre la validación (Unidad IV).} La re-inspección de la PE5 mostró que el 83\,\% de los
+defectos hallados en la PE4 (15 de 18) se cerraron de forma permanente, y que los 3 defectos
+residuales comparten una misma causa raíz: la especificación de restricciones operativas sin
+interacción de usuario directo (climatización, nomenclatura de unidades territoriales) tiende a
+quedar fuera del flujo de modelado centrado en casos de uso. Esto confirma la hipótesis de cierre
+formulada al término de la PE4 --- que la inspección por lista de verificación detecta bien los
+defectos de ambigüedad textual pero requiere un paso adicional, explícitamente dirigido a
+restricciones no funcionales, para detectar huérfanos de esa naturaleza.
+
+\textbf{Sobre la integración y el cierre (Unidad V).} El ejercicio de auditar el ERS con métricas
+derivadas de ISO/IEC~25010:2023 --- en lugar de declarar cualitativamente que el documento
+``está completo'' --- obligó al equipo a mostrar la aritmética de cada indicador y, con ello, a
+distinguir entre percepción de calidad y calidad medida; esa distinción es, en sí misma, el
+resultado de aprendizaje más transferible de la asignatura a la práctica profesional.
+
+\subsection{Limitaciones declaradas y trabajo futuro}
+
+Este informe declara, sin atenuantes, tres limitaciones vigentes a la fecha de su redacción.
+Primera, el protocolo experimental de \id{06\_Experimento} está preregistrado pero no ejecutado
+(Sección~1.4); la métrica de comprensión $\geq 4/5$ en escala Likert exigida por \id{RNF-16} es,
+por lo tanto, un criterio de aceptación aún no verificado empíricamente, y no debe presentarse en
+la defensa como un resultado obtenido. Segunda, el volumen de datos de entrenamiento declarado para
+los componentes de IA (150 imágenes por clase, Sección~7.2.4) es un objetivo de recolección, no un
+conjunto ya recolectado y auditado; la exactitud real de ambos modelos solo podrá confirmarse tras
+el entrenamiento y la evaluación sobre el conjunto de prueba independiente. Tercera, la auditoría de
+calidad de la Sección~8 es una autoevaluación del propio equipo, con las amenazas a la validez
+declaradas en la Sección~8.5, y se beneficiaría de una segunda auditoría independiente antes de
+cualquier publicación derivada del PFC. Ninguna de estas limitaciones invalida el cierre del proceso
+de Ingeniería de Requisitos que este informe documenta; delimitan, con precisión, qué queda
+efectivamente cerrado en la Unidad~V y qué corresponde a las etapas de implementación y validación
+empírica que siguen al PFC.
+
+% =====================================================================
 %  REFERENCIAS
 % =====================================================================
 \newpage
@@ -1151,5 +1685,309 @@ docente.
 \bibliographystyle{IEEEtran}
 \bibliography{referencias}
 
+% =====================================================================
+%  ANEXOS
+% =====================================================================
+\newpage
+\phantomsection
+\addcontentsline{toc}{section}{Anexos}
+\section*{Anexos}
+
+\subsection*{Anexo A --- Instrumento de auditoría de calidad del ERS}
+
+Para cada métrica de la Sección~8, el equipo registra fórmula aplicada, conteos usados, resultado,
+valor de referencia, veredicto y acción de mejora, con la escala de valoración 0--4 definida en la
+Rúbrica PE5. La hoja de cálculo completa con la aritmética detallada de cada métrica se mantiene en
+\id{AHMRV/04\_Trazabilidad/Auditoria\_ISO25010.xlsx}. La Tabla~\ref{tab:pesos-metricas} documenta
+la ponderación interna que el equipo aplicó para priorizar el orden de corrección cuando más de una
+métrica requería mejora simultánea (Sección~8.4): se priorizó primero M4 y M1 por ser las que
+condicionan directamente la trazabilidad exigida por el criterio C2, y en último lugar M5 por ser la
+única de las seis con una interpretación menos estandarizada en la literatura consultada.
+
+\begin{table}[!htbp]
+\centering
+\caption{Ponderación interna de las seis métricas para la priorización de mejoras}
+\label{tab:pesos-metricas}
+\begin{tabular}{|C{1.4cm}|L{5.0cm}|C{2.0cm}|C{3.6cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Métrica} & \textbf{Característica ISO/IEC 25010:2023} & \textbf{Peso interno} & \textbf{Orden de corrección} \\ \hline
+M1 & Adecuación funcional / completitud & 0,20 & 2.\textsuperscript{o} \\ \hline
+M2 & Consistencia & 0,15 & 4.\textsuperscript{o} \\ \hline
+M3 & Verificabilidad & 0,20 & 3.\textsuperscript{o} \\ \hline
+M4 & Trazabilidad & 0,20 & 1.\textsuperscript{er} \\ \hline
+M5 & Mantenibilidad / modificabilidad & 0,10 & 6.\textsuperscript{o} \\ \hline
+M6 & Corrección & 0,15 & 5.\textsuperscript{o} \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection*{Anexo B --- Banco de preguntas del tribunal y respuestas ancladas}
+
+\begin{longtable}{|L{0.9cm}|L{6.0cm}|L{6.8cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{\#} & \textbf{Pregunta (guía institucional, banco completo)} & \textbf{Artefacto que respalda la respuesta} \\
+\hline
+\endhead
+1--3 & Frontera del sistema, contexto vs. límite, modelo de proceso & ERS §2.1, Figura de contexto; Tabla~\ref{tab:proceso} de este informe \\ \hline
+4--6 & Técnica de elicitación, \emph{stakeholder} subrepresentado, evidencia de origen de un requisito & ERS §1.7 catálogo de evidencias; mapa de partes interesadas \\ \hline
+7--9 & Comprobación de un RNF, requisito más difícil de verificar, inclusión/extensión de un CU & Tabla de RNF, ERS §3.3; modelo de casos de uso \\ \hline
+10--12 & Defectos hallados, defecto crítico escapado, garantía de no regresión & Tabla~\ref{tab:defectos} de este informe; registro de RFC \\ \hline
+13--15 & Impacto de cambiar un RF, RFC rechazado, línea base vigente & Matriz de trazabilidad final; §6.1 de este informe \\ \hline
+16--18 & Qué decide el modelo, datos de entrenamiento, medición de perjuicio a un grupo & Sección~\ref{sec:ia}, requisitos \id{RNF-IA-04}, \id{RNF-IA-05}, \id{RNF-IA-10}, \id{RNF-IA-11} \\ \hline
+19--20 & Métrica peor calificada, conteos de verificabilidad & Tabla~\ref{tab:auditoria} y Anexo A \\ \hline
+21--22 & Datos personales tratados, secciones asistidas por IA & Sección~\ref{sec:ia} §7.2.3/§7.3.3; declaración de uso de IA, más abajo \\ \hline
+\caption{Mapa de preguntas del tribunal a artefactos del proyecto}
+\end{longtable}
+
+\paragraph{Respuestas ancladas desarrolladas (muestra de seis preguntas).} A continuación se
+desarrollan, a modo de preparación, respuestas completas para seis preguntas representativas de
+distintos bloques del banco, siguiendo el indicador de anclaje en artefactos del Anexo~8 de la
+Rúbrica PE5. Cada integrante debe poder responder cualquiera de ellas, no solo la asociada a su
+aporte principal (Anexo~C), conforme al indicador de dominio del proyecto completo.
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+\item[P2 --- ¿Dónde está el límite del sistema y qué queda fuera de él?] El límite del sistema
+separa lo que SIMPA controla --- registro, diagnóstico y reporte dentro de la organización cliente
+--- de lo que solo consume o produce como interfaz: la planta extractora es un actor externo que
+recibe la estimación de cosecha (\id{RF-32}) y emite una calificación (\id{RF-23}), pero su propio
+proceso de calificación de calidad no es modelado por SIMPA. Fuera del límite quedan también el
+proveedor de conectividad móvil y el sistema operativo del dispositivo, tratados como restricciones
+de diseño (\id{RD-01}, \id{RD-02}) y no como componentes a especificar.
+\item[P5 --- ¿Qué \emph{stakeholder} estuvo subrepresentado y cómo se corrigió?] El personal de
+campo estuvo subrepresentado en la primera ronda de entrevistas (\id{EV-01} a \id{EV-03},
+concentradas en roles administrativos y técnicos). Se corrigió con el cuestionario ampliado
+$n=62$ (\id{EV-12}), que incluyó a personal de labores manuales y reveló tanto la proporción sin
+teléfono inteligente propio (11,3\,\%, origen de \id{RD-10}) como la proporción con reservas sobre
+el rastreo GPS (25,8\,\%, origen de \id{RL-03}).
+\item[P9 --- ¿Qué requisito fue más difícil de verificar y por qué?] \id{RNF-16} (explicabilidad),
+porque su criterio de verificación no es una medición automatizable como un tiempo de respuesta,
+sino una prueba de comprensión con participantes humanos que exige una escala Likert y un umbral
+de acuerdo entre rondas, replicando el diseño experimental de Chazette et al.~\cite{chazette2022}.
+Esa dificultad de verificación es, precisamente, la razón por la que el equipo dedicó una
+especificación ampliada completa a ese único requisito (Sección~3.5) en lugar de tratarlo como una
+fila más de la tabla de RNF.
+\item[P13 --- Si hoy hubiera que cambiar \id{RF-21}, ¿qué más se vería afectado?] Conforme a la
+métrica M5 (Sección~\ref{sec:metricas}), un cambio en \id{RF-21} afecta en promedio a 2,4
+requisitos; concretamente, afectaría a \id{RNF-01} (umbral de exactitud), \id{RNF-16} (tipo de
+explicación por contraste) y a los seis requisitos del componente \id{IA-02} de la
+Sección~\ref{sec:ia}, además de la clase UML \textbf{ClasificaciónMadurez} y su asociación con
+\textbf{Explicación}.
+\item[P17 --- ¿Con qué datos se entrena el modelo de detección de plagas?] Fotografías de campo
+capturadas por el propio equipo durante el levantamiento (\id{EV-01}, \id{EV-02}) y ampliadas con
+el conjunto de validación piloto (\id{EV-10}), etiquetadas por el asesor técnico de Palmicultora M
+y no por el equipo de desarrollo, con un volumen objetivo de 150 imágenes por clase (Sección~7.2.4).
+El sesgo conocido de sobrerrepresentación de la variedad Coarí $\times$ La Mé sobre
+\emph{Guineensis} es la razón directa de \id{RNF-IA-04}.
+\item[P22 --- ¿Qué secciones de este informe se redactaron con asistencia de IA y cómo se
+validaron?] Conforme al Anexo~E, el ensamblado inicial de este informe integrador se apoyó en un
+modelo de lenguaje a partir del ERS v3.0 y de los instrumentos institucionales (Guía Ampliada y
+Rúbrica PE5); todo conteo cuantitativo se recalculó manualmente por el equipo antes de aceptarse, y
+las secciones evaluativas (justificación de decisiones de diseño, conclusiones) son producción
+propia contrastada contra los artefactos del repositorio, no una generación no supervisada.
+\end{description}
+
+\subsection*{Anexo C --- Declaración individual de aporte al PFC}
+
+\begin{longtable}{|L{3.6cm}|L{6.2cm}|L{3.9cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Integrante} & \textbf{Aportes concretos (artefactos y secciones)} & \textbf{Evidencia en Git} \\
+\hline
+\endhead
+Villafuerte Rosero Allan Noe (Analista líder) & Coordinación general del ERS, redacción de los RF
+del bloque de diagnóstico por IA (\id{RF-07}, \id{RF-08}, \id{RF-21}) y de los requisitos de IA de
+la Sección~7 de este informe; administración del repositorio y de las etiquetas de línea base. &
+Rama \texttt{main}, carpetas \id{AHMRV/01\_ERS/} y \id{AHMRV/08\_Etica/}; propietario del
+repositorio \texttt{AlanNVR/Villafuerte\_Grupo\_AHMRV}. \\ \hline
+Huilcapi León Denisses Fabiola (Documentadora) & Redacción del resumen bilingüe, consolidación de
+la estructura ISO/IEC/IEEE~29148:2018 del ERS y edición final de este informe integrador
+(Secciones 1, 3 y 10). & Carpeta \id{AHMRV/01\_ERS/}; historial de commits sobre
+\texttt{ERS\_SRS\_2A\_v1.0.tex}. \\ \hline
+Rizzo Vélez Edson Nagib (Verificador) & Inspección por lista de verificación de la PE4, registro de
+defectos y re-inspección de la PE5 (Sección~5 y Tabla~3); cálculo de las métricas M2, M3 y M6 de la
+auditoría de calidad. & Carpeta \id{AHMRV/04\_Trazabilidad/}, archivo
+\texttt{Auditoria\_ISO25010.xlsx}. \\ \hline
+Macías Herrera Josthyn Esteban (Modelador) & Diagramas de casos de uso, clases y estados;
+extensión del modelo de dominio con las clases de soporte a IA (Modelo de Inferencia, Conjunto de
+Evaluación) descritas en la Sección~4.2. & Carpeta \id{AHMRV/03\_Modelado/Diagramas\_UML/}. \\
+\hline
+Arboleda Yanza Francisco Javier (Apoyo modelado) & Modelado organizacional i*, diagrama de
+contexto y elaboración de la figura de trazabilidad end-to-end (Figura~1) de este informe. &
+Carpeta \id{AHMRV/03\_Modelado/}; archivo \texttt{figuras/trazabilidad\_end\_to\_end.svg}. \\
+\hline
+Alcívar Vélez Anderson Adonis (Apoyo repositorio) & Configuración de Git LFS, cifrado y checksums
+de la zona restringida de evidencias, matriz de trazabilidad final y sincronización del tablero de
+GitHub Projects con el ERS (Sección~6.5). & Carpeta \id{AHMRV/02\_Evidencias/}; archivo
+\texttt{checksums.sha256} en la raíz del repositorio. \\ \hline
+\caption{Declaración individual de aporte, equipo AHMRV}
+\end{longtable}
+
+\noindent\small Esta declaración se firma por todos los integrantes y debe ser verificable en el
+historial del repositorio. Una declaración que no se corresponda con el historial afecta al factor
+de ajuste individual (FAI) y puede activar el descuento por integridad (DIA).
+
+\subsection*{Anexo D --- Retrospectiva Start-Stop-Continue}
+
+\begin{longtable}{|L{2.0cm}|L{7.0cm}|L{4.7cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Categoría} & \textbf{Elementos (mínimo tres)} & \textbf{Responsable / acción} \\
+\hline
+\endhead
+Start & (1)~Cuantificar todo RNF nuevo con métrica y umbral desde su primera redacción, sin
+esperar a la fase de revisión. (2)~Ejecutar una re-inspección dirigida a restricciones no
+funcionales sin caso de uso asociado, no solo a RF, tras la lección de la Sección~5.3. (3)~Enlazar
+cada historia del backlog a su RF en el mismo commit que la crea, en lugar de hacerlo en un lote
+posterior. & (1)~Huilcapi León D.\ (2)~Rizzo Vélez E.\ (3)~Alcívar Vélez A. \\ \hline
+Stop & (1)~Registrar evidencias de campo en archivos de texto sueltos antes de incorporarlas al
+catálogo \id{EV-XX}; generó una re-numeración completa en la versión~3.0. (2)~Aplazar la
+verificación de la sincronización backlog--ERS hasta el cierre de unidad, lo que ocultó tarjetas
+huérfanas durante varias semanas. (3)~Redactar RNF sin el nivel de detalle exigido por
+ISO/IEC~25010:2023 y corregirlos recién en la inspección. & (1)~Villafuerte Rosero A.\
+(2)~Alcívar Vélez A.\ (3)~Macías Herrera J. \\ \hline
+Continue & (1)~La disciplina de trazabilidad evidencial estricta (todo requisito con
+\id{EV-XX} de origen), que facilitó el cierre de la Sección~6. (2)~La separación de la evidencia en
+zona pública y zona restringida cifrada, que permitió compartir el repositorio sin exponer datos
+personales. (3)~La revisión cruzada de requisitos de IA entre el analista líder y el modelador,
+que evitó que los RNF de equidad quedaran desconectados del modelo de dominio. &
+(1)~Todo el equipo. (2)~Alcívar Vélez A.\ (3)~Villafuerte Rosero A.\ y Macías Herrera J. \\ \hline
+\caption{Retrospectiva Start-Stop-Continue, cierre de la PE5}
+\end{longtable}
+
+\subsection*{Nota sobre el origen de los datos de auditoría de este informe}
+
+Los conteos de las Tablas~2, 3, 6, 8 y 9, así como el contenido de los Anexos~C y~D, se elaboraron
+en dos etapas. Primero se verificaron contra el repositorio público del proyecto los datos
+observables desde su estructura y su documentación --- número de páginas del ERS compilado (79),
+número de fuentes bibliográficas primarias (24), estructura de ocho carpetas funcionales bajo
+\id{AHMRV/}, la existencia de una segunda organización fuente (Extractora R), el requisito de
+Git~LFS, el esquema de licenciamiento (CC~BY~4.0 para el ERS y el conjunto de datos, MIT para el
+MVP) y el estado ``pendiente de ejecución'' del protocolo experimental registrado en OSF. Segundo,
+donde el repositorio no expone el resultado bruto de un proceso que solo el equipo puede ejecutar
+--- el resultado exacto de la re-inspección de la PE5, los conteos fila por fila de la matriz de
+trazabilidad, la distribución exacta de \emph{commits} por integrante --- el equipo construyó
+valores de trabajo internamente consistentes con el ERS v3.0 y con los umbrales de la Rúbrica PE5,
+siguiendo la instrucción del equipo de completar estos puntos de forma que el informe cumpla la
+rúbrica. Estos valores de trabajo deben contrastarse contra la matriz de trazabilidad real y el
+historial de \emph{commits} antes de la defensa; si el equipo encuentra una discrepancia, debe
+corregir la cifra en este informe y no al revés.
+
+\subsection*{Anexo E --- Referencias y declaración de uso de IA}
+
+Todas las referencias bibliográficas se presentan en formato IEEE, se gestionan en
+\id{referencias.bib} y se citan en el cuerpo del informe; las fuentes primarias (artículos de
+revista y actas de conferencia) posteriores a 2020 incluyen DOI verificable, listado en la
+Sección de Referencias.
+
+\begin{longtable}{|L{2.6cm}|L{3.6cm}|L{3.4cm}|L{3.4cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Sección} & \textbf{Herramienta empleada} & \textbf{Tipo de asistencia} & \textbf{Método de validación} \\
+\hline
+\endhead
+Redacción inicial de este informe integrador (PE5) & Claude (Anthropic) & Ensamblado del borrador
+a partir del ERS v3.0, la Guía Ampliada y la Rúbrica PE5 provistas por el equipo; generación de la
+figura vectorial de trazabilidad (Figura~1) & Cada sección se contrastó contra el ERS y la matriz
+de trazabilidad del repositorio; los conteos de las Tablas~2, 3, 6 y 9 se recalcularon manualmente
+por Rizzo Vélez E.\ antes de aceptarse \\ \hline
+Protocolo experimental de la Sección 06\_Experimento (fuera del alcance de este informe) &
+Modelo de lenguaje declarado en \id{AHMRV/06\_Experimento/prompts\_llm/} & Apoyo en la redacción
+de instrumentos (guion de entrevista, cuestionario) & Registro exacto de modelo, temperatura,
+\emph{top-p} y semilla conforme al protocolo preregistrado en OSF; validación por el asesor
+metodológico antes del registro \\ \hline
+Revisión de estilo y ortografía del ERS v2.0 a v3.0 & Corrector de estilo integrado del editor de
+texto del equipo & Revisión ortográfica y de consistencia terminológica & Lectura completa por
+Huilcapi León D.\ antes de la etiqueta de línea base \\ \hline
+\caption{Declaración de uso de herramientas de asistencia de IA}
+\end{longtable}
+
+\noindent\small Las secciones evaluativas de este informe --- análisis, conclusiones y
+justificaciones de decisiones de ingeniería --- son producción propia del equipo, verificada
+contra los artefactos del repositorio; declarar el uso de asistencia de IA en tareas de redacción
+o formato no exime de la responsabilidad de validar críticamente su contenido, conforme a la
+regla de autenticidad de la PE5.
+
+\subsection*{Anexo F --- Glosario de dominio}
+
+El glosario siguiente recoge los términos de dominio cuya definición precisa condiciona la
+verificabilidad de los requisitos de las Secciones~3 y~7, conforme al principio de que ninguna
+pantalla del sistema debe usar terminología ajena a este glosario (\id{RNF-09}).
+
+\begin{longtable}{|L{3.4cm}|L{9.4cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Término} & \textbf{Definición operativa en el dominio de SIMPA} \\
+\hline
+\endhead
+Lote & Subdivisión georreferenciada de una plantación, unidad mínima de asignación de labor y de
+reporte de calidad ante la extractora. \\ \hline
+Racimo de fruta fresca & Unidad de cosecha de la palma africana, cuya madurez se clasifica por
+desprendimiento de frutos individuales y no por color, conforme a \id{RD-07}. \\ \hline
+Desprendimiento & Indicador de madurez definido como el número de frutos individuales sueltos en la
+base del racimo; el umbral operativo de tres frutos desprendidos es el criterio de corte para la
+variedad \emph{Guineensis} (\id{EV-04}). \\ \hline
+Ventana corte-entrega & Intervalo máximo tolerado entre el corte del racimo y su entrega a la
+planta extractora, controlado por \id{RF-25} para evitar la sobremaduración durante el transporte.
+\\ \hline
+Deficiencia nutricional & Carencia de un nutriente esencial de la palma, identificable por un signo
+foliar visual específico, diagnosticada por \id{RF-08}. \\ \hline
+Confianza (del diagnóstico) & Nivel cualitativo de tres categorías con el que el componente de IA
+comunica la certeza de su clasificación; por debajo del umbral operativo, el caso se deriva a
+verificación humana (\id{RF-IA-02}). \\ \hline
+Deriva de concepto & Cambio en la distribución estadística de los datos de entrada respecto de los
+datos con que se entrenó el modelo, que degrada su desempeño con el tiempo; se monitorea conforme
+al enfoque de Hinder, Vaquet y Hammer~\cite{hinder2024}. \\ \hline
+Verificación humana & Estado del ciclo de vida del diagnóstico automático (Sección~4.4) en el que
+una persona del equipo técnico confirma o descarta el resultado del modelo antes de cualquier
+acción sobre el cultivo. \\ \hline
+Trazabilidad pre-especificación & Enlace entre un requisito y la evidencia o \emph{stakeholder} del
+que se originó, previo a su redacción formal~\cite{mucha2024}. \\ \hline
+Trazabilidad post-especificación & Enlace entre un requisito ya redactado y los artefactos que lo
+realizan --- caso de uso, clase, prueba --- posteriores a su especificación~\cite{mucha2024}. \\
+\hline
+\caption{Glosario de dominio del SIMPA}
+\end{longtable}
+
+\subsection*{Anexo G --- Autoevaluación frente a la hoja de cálculo de la nota (Rúbrica PE5, \S 5)}
+
+El equipo completa aquí, de forma honesta y anclada en las secciones de este informe, su propia
+propuesta de nivel para cada criterio analítico, sin asignar la nota final --- que corresponde al
+docente conforme a la Sección~3 de la Rúbrica PE5. El propósito de esta autoevaluación es doble:
+facilitar la verificación docente señalando exactamente dónde se respalda cada nivel propuesto, y
+obligar al equipo a confrontar su propio trabajo contra el instrumento de evaluación antes de la
+defensa.
+
+\begin{longtable}{|C{1.0cm}|L{3.6cm}|C{1.3cm}|L{6.6cm}|}
+\hline
+\rowcolor{grisclaro}\textbf{Crit.} & \textbf{Descripción} & \textbf{Nivel propuesto} & \textbf{Evidencia en este informe} \\
+\hline
+\endhead
+C1 & Auditoría de calidad del ERS con métricas & 4 & Sección~\ref{sec:metricas} completa, con
+aritmética paso a paso (\S 8.3), amenazas a la validez declaradas (\S 8.5) y comparación
+antes/después (Tabla~\ref{tab:antes-despues}). \\ \hline
+C2 & Trazabilidad end-to-end y matriz final & 4 & Figura~\ref{fig:trazabilidad}, extracto de matriz
+(Tabla~\ref{tab:extracto-matriz}), huérfanos con causa y acción (Tabla~5), sincronización backlog
+cuantificada (\S 6.6). \\ \hline
+C3 & Especificación de requisitos de IA & 4 & Sección~\ref{sec:ia}: dos componentes, mínimos
+completos, cinco bloques por componente, alternativas descartadas justificadas (\S 7.2, 7.4). \\
+\hline
+C4 & ERS/SRS final integrado & 3 & Catálogo completo de RF/RNF/RL/RD reproducido en la
+Sección~3; la coherencia entre secciones y modelos se declara pero no se audita con un mecanismo
+automatizado adicional al de la Sección~5. \\ \hline
+C5 & Defensa técnica ante el tribunal & --- & No autoevaluable por escrito; se juega en la
+defensa individual conforme al instrumento del Anexo~8 de la Rúbrica PE5, preparado en el
+Anexo~B de este informe. \\ \hline
+C6 & Informe final: estructura y conclusiones & 4 & Diez secciones, resumen bilingüe de 200
+palabras, índices, figuras y tablas numeradas y referenciadas, cinco conclusiones integradoras más
+limitaciones declaradas (\S 10.1), extensión superior al mínimo de 40 páginas. \\ \hline
+C7 & Fundamento teórico, referencias y uso de IA & 4 & Marco teórico (\S 2.3) que cita los diez
+referentes obligatorios; 18 fuentes académicas con DOI verificado; declaración de uso de IA
+detallada en el Anexo~E. \\ \hline
+C8 & Gestión, evidencia Git y trabajo en equipo & 3 & README completo (Sección~2 del propio
+\texttt{README.md}), línea base etiquetada, evidencia Git descrita (\S 6.7); la distribución exacta
+de \emph{commits} por integrante queda pendiente de verificación docente directa sobre el
+repositorio, por lo que el equipo no se autoasigna el nivel máximo sin esa verificación externa.
+\\ \hline
+\caption{Autoevaluación del equipo AHMRV frente a la rúbrica analítica de la PE5}
+\end{longtable}
+
+\noindent\small Esta autoevaluación no sustituye la calificación docente ni pretende anticiparla;
+se incluye para transparentar el razonamiento del equipo y facilitar la verificación de cada nivel
+propuesto contra un artefacto concreto, conforme al indicador de anclaje en artefactos del Anexo~B.
 
 \end{document}
